@@ -92,7 +92,7 @@ def get_url(coord, imsize=30., scale=0.39612, grid=None, label=None, invert=None
     return url
 
 
-def get_catalog(coords,radius=1*units.arcmin,photoz=True,
+def get_catalog(coord,radius=1*units.arcmin,photoz=True,
                 photoobj_fields=None,
                 timeout=None,
                 print_query=False):
@@ -104,7 +104,7 @@ def get_catalog(coords,radius=1*units.arcmin,photoz=True,
     """
 
     if not photoz:
-        return _SDSS.query_region(coord, radius=radius, timeout=timeout,photoobj_fields=photoobj_fields)
+        return SDSS.query_region(coord, radius=radius, timeout=timeout,photoobj_fields=photoobj_fields)
 
     if photoobj_fields is None:
         photoobj_fs = ['ra', 'dec', 'objid', 'run', 'rerun', 'camcol', 'field']
@@ -118,11 +118,11 @@ def get_catalog(coords,radius=1*units.arcmin,photoz=True,
 
     query += "pz.z as redshift, pz.zErr as redshift_error\n"
     query += "FROM PhotoObjAll as p\n"
-    query += "JOIN dbo.fGetNearbyObjEq({:f},{:f},{:f}) AS GN\nON GN.objID=p.objID\n".format(coords.ra.value,coords.dec.value,radius.to(_u.arcmin).value)
+    query += "JOIN dbo.fGetNearbyObjEq({:f},{:f},{:f}) AS GN\nON GN.objID=p.objID\n".format(coord.ra.value,coord.dec.value,radius.to(units.arcmin).value)
     query += "JOIN Photoz AS pz ON pz.objID=p.objID\n"
     query += "ORDER BY distance"
 
     if print_query:
         print(query)
 
-    return _SDSS.query_sql(query,timeout=timeout)
+    return SDSS.query_sql(query,timeout=timeout)
