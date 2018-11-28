@@ -33,6 +33,8 @@ to install and/or update these packages.
 * `astropy <http://www.astropy.org/>`_ version 1.3 or later
 * `scipy <http://www.scipy.org/>`_ version 0.18 or later
 * `matplotlib <http://matplotlib.org/>`_  version 1.4 or later
+* `PIL <https://pillow.readthedocs.io/en/5.3.x/>`_  version 5.3 or later
+* `FRB <https://github.com/FRBs/FRB>`_ master branch
 
 If you are using Anaconda, you can check the presence of these packages with::
 
