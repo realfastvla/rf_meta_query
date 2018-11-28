@@ -1,10 +1,10 @@
 .. highlight:: rest
 
-*****************
-Installing specdb
-*****************
+************************
+Installing rf_meta_query
+************************
 
-This document describes how to install the `specdb`
+This document describes how to install the `rf_meta_query`
 repository.  We also describe
 :ref:`download-public`.
 
@@ -51,21 +51,21 @@ with a command like::
 
 	conda update scipy
 
-Installing specdb
-=================
+Installing rf_meta_query
+========================
 
 Presently, you must download the code from github::
 
-	#go to the directory where you would like to install specdb.
-	git clone https://github.com/specdb/specdb.git
+	#go to the directory where you would like to install
+	git clone https://github.com/realfastvla/rf_meta_query.git
 
 From there, you can build and install with
 
-	cd specdb
+	cd rf_meta_query
 	python setup.py install  # or use develop
 
 
-This should install the package and scripts.
+This should install the package and any scripts.
 Make sure that your PATH includes the standard
 location for Python scripts (e.g. ~/anaconda/bin)
 
