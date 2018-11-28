@@ -1,6 +1,7 @@
 """ Methods related to SDSS/BOSS queries """
 
 import numpy as np
+import pdb
 
 from astropy import units
 from astropy.coordinates import SkyCoord
@@ -30,12 +31,6 @@ def get_photom(coord, radius=0.5*units.arcmin, timeout=30.):
     # Call
     phot_catalog = SDSS.query_region(coord, radius=radius, timeout=timeout,
                                      photoobj_fields=photoobj_fs + mags + magsErr)
-
-    # Sort by offset
-    phot_coords = SkyCoord(ra=phot_catalog['ra'], dec=phot_catalog['dec'], unit='deg')
-    seps = coord.separation(phot_coords)
-    isrt = np.argsort(seps)
-    phot_catalog = phot_catalog[isrt]
 
     # Remove duplicates?
 
@@ -112,17 +107,48 @@ def get_catalog(coord,radius=1*units.arcmin,photoz=True,
         magsErr = ['petroMagErr_u', 'petroMagErr_g', 'petroMagErr_r', 'petroMagErr_i', 'petroMagErr_z']
         photoobj_fields = photoobj_fs+mags+magsErr
 
+    # Call
+    photom_catalog = SDSS.query_region(coord, radius=radius, timeout=timeout,
+                                     photoobj_fields=photoobj_fields)
+
+    # Now query for photo-z
+
     query = "SELECT GN.distance, "
-    for field in photoobj_fields:
-        query += "p.{:s}, ".format(field)
+    #for field in photoobj_fields:
+    #    query += "p.{:s}, ".format(field)
+    query += "p.objid, "
 
     query += "pz.z as redshift, pz.zErr as redshift_error\n"
     query += "FROM PhotoObjAll as p\n"
-    query += "JOIN dbo.fGetNearbyObjEq({:f},{:f},{:f}) AS GN\nON GN.objID=p.objID\n".format(coord.ra.value,coord.dec.value,radius.to(units.arcmin).value)
+    query += "JOIN dbo.fGetNearbyObjEq({:f},{:f},{:f}) AS GN\nON GN.objID=p.objID\n".format(
+        coord.ra.value,coord.dec.value,radius.to('arcmin').value)
     query += "JOIN Photoz AS pz ON pz.objID=p.objID\n"
     query += "ORDER BY distance"
 
     if print_query:
         print(query)
 
-    return SDSS.query_sql(query,timeout=timeout)
+    photz_cat = SDSS.query_sql(query,timeout=timeout)
+
+    # Match em up
+    from specdb.cat_utils import match_ids
+    matches = match_ids(photz_cat['objid'], photom_catalog['objid'], require_in_match=False)
+    gdz = matches > 0
+    # Init
+    photom_catalog['z'] = -9999.
+    photom_catalog['z_error'] = -9999.
+    # Fill
+    photom_catalog['z'][matches[gdz]] = photz_cat['redshift'][np.where(gdz)]
+    photom_catalog['z_error'][matches[gdz]] = photz_cat['redshift_error'][np.where(gdz)]
+
+    # Sort by offset
+    catalog = photom_catalog.copy()
+    phot_coords = SkyCoord(ra=catalog['ra'], dec=catalog['dec'], unit='deg')
+    seps = coord.separation(phot_coords)
+    catalog['separation'] = seps.to('arcsec').value
+    isrt = np.argsort(seps)
+    catalog = catalog[isrt]
+
+    # Return
+    return catalog
+

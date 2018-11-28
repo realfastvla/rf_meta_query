@@ -34,11 +34,13 @@ def main(pargs):
 
     """
     import warnings
+    import numpy as np
 
     from rf_meta_query import frb_cand
     from rf_meta_query import sdss
     from rf_meta_query import io as rfmq_io
     from rf_meta_query import images
+    from rf_meta_query import dm
 
     # FRB Candidate object
     ra, dec = pargs.radec.split(',')
@@ -47,18 +49,32 @@ def main(pargs):
     # Meta dir
     meta_dir = rfmq_io.meta_dir(frbc, create=True)
 
-    # SDSS
-    phot_tbl = sdss.get_photom(frbc['coord'])
-    rfmq_io.write_table(phot_tbl, meta_dir, 'sdss_phot', verbose=pargs.verbose)
-    # SDSS Image
-    if len(phot_tbl) is not None:  # This is a bit risky as a small radius might return None
-        imsize = 30. # arcsec
+    # SDSS catalog
+    sdss_cat = sdss.get_catalog(frbc['coord'])
+    rfmq_io.write_table(sdss_cat, meta_dir, 'sdss_catalog', verbose=pargs.verbose)
+    # In the database?
+    if len(sdss_cat) is not None:  # This is a bit risky as a small radius might return None
+        # SDSS cutout Image
+        imsize = 30.  # arcsec
         sdss_url = sdss.get_url(frbc['coord'], imsize=imsize/60.)  # arcmin
         img = images.grab_from_url(sdss_url)
         # Prep plot
         plt = images.gen_snapshot_plt(img, imsize)
         # Write
         rfmq_io.save_plt(plt, meta_dir, 'sdss_snap', verbose=pargs.verbose)
+
+        # SDSS DM
+        close_obj = sdss_cat['separation'] < 1. # arcsec
+        gdz = sdss_cat['z_error'][close_obj] > 0.
+        if np.any(gdz):
+            ibest = np.argmin(sdss_cat['z_error'][close_obj][gdz])
+            frbc['z'] = sdss_cat['z'][close_obj][gdz][ibest]
+            print("SDSS photo-z = {}".format(frbc['z']))
+            # DM
+            DM_best = dm.best_dm_from_z(frbc)
+            print("DM_FRB = {} pc/cm^3".format(DM_best))
+
+
 
 
 
