@@ -41,6 +41,7 @@ def main(pargs):
     from rf_meta_query import io as rfmq_io
     from rf_meta_query import images
     from rf_meta_query import dm
+    from rf_meta_query import radio
 
     # FRB Candidate object
     ra, dec = pargs.radec.split(',')
@@ -51,7 +52,8 @@ def main(pargs):
 
     # SDSS catalog
     sdss_cat = sdss.get_catalog(frbc['coord'])
-    rfmq_io.write_table(sdss_cat, meta_dir, 'sdss_catalog', verbose=pargs.verbose)
+    if len(sdss_cat) is not None:
+        rfmq_io.write_table(sdss_cat, meta_dir, 'sdss_catalog', verbose=pargs.verbose)
     # In the database?
     if len(sdss_cat) is not None:  # This is a bit risky as a small radius might return None
         # SDSS cutout Image
@@ -74,7 +76,13 @@ def main(pargs):
             DM_best = dm.best_dm_from_z(frbc)
             print("DM_FRB = {} pc/cm^3".format(DM_best))
 
-
+    # NVSS
+    nvss_cat = radio.query_nvss(frbc)
+    if nvss_cat is not None:
+        print("The closest source has flux: {} mJy at separation {:0.2f} arcmin".format(nvss_cat[0]['FLUX_20_CM'],
+                                                                            nvss_cat[0]['separation']))
+        print("The brighest source in radius {} arcmin has flux: {} mJy".format(nvss_cat.meta['radius'],
+                                                                         nvss_cat[0]['FLUX_20_CM']))
 
 
 

@@ -8,6 +8,8 @@ from astropy.coordinates import SkyCoord
 
 from astroquery.sdss import SDSS
 
+from rf_meta_query import catalog_utils
+
 
 def get_photom(coord, radius=0.5*units.arcmin, timeout=30.):
     """
@@ -143,11 +145,10 @@ def get_catalog(coord,radius=1*units.arcmin,photoz=True,
 
     # Sort by offset
     catalog = photom_catalog.copy()
-    phot_coords = SkyCoord(ra=catalog['ra'], dec=catalog['dec'], unit='deg')
-    seps = coord.separation(phot_coords)
-    catalog['separation'] = seps.to('arcsec').value
-    isrt = np.argsort(seps)
-    catalog = catalog[isrt]
+    catalog = catalog_utils.sort_by_separation(catalog, coord, radec=('ra','dec'), add_sep=True)
+
+    # Meta
+    catalog.meta['radius'] = radius.to('arcmin').value
 
     # Return
     return catalog
