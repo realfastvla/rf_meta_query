@@ -1,46 +1,12 @@
 """ Methods related to SDSS/BOSS queries """
 
 import numpy as np
+import pdb
 
 from astropy import units
 from astropy.coordinates import SkyCoord
 
 from astroquery.sdss import SDSS
-
-
-def get_photom(coord, radius=0.5*units.arcmin, timeout=30.):
-    """
-
-    Args:
-        coord: SkyCoord
-        radius: Angle (or Quantity), optional
-          search radius for sources
-        timeout: float, optional
-
-    Returns:
-        phot_catalog: Table
-
-    """
-
-    # Meta data of interest
-    photoobj_fs = ['ra', 'dec', 'objid', 'run', 'rerun', 'camcol', 'field']
-    mags = ['petroMag_u', 'petroMag_g', 'petroMag_r', 'petroMag_i', 'petroMag_z']
-    magsErr = ['petroMagErr_u', 'petroMagErr_g', 'petroMagErr_r', 'petroMagErr_i', 'petroMagErr_z']
-
-    # Call
-    phot_catalog = SDSS.query_region(coord, radius=radius, timeout=timeout,
-                                     photoobj_fields=photoobj_fs + mags + magsErr)
-
-    # Sort by offset
-    phot_coords = SkyCoord(ra=phot_catalog['ra'], dec=phot_catalog['dec'], unit='deg')
-    seps = coord.separation(phot_coords)
-    isrt = np.argsort(seps)
-    phot_catalog = phot_catalog[isrt]
-
-    # Remove duplicates?
-
-    # Return
-    return phot_catalog
 
 
 def get_url(coord, imsize=30., scale=0.39612, grid=None, label=None, invert=None):
@@ -92,19 +58,34 @@ def get_url(coord, imsize=30., scale=0.39612, grid=None, label=None, invert=None
     return url
 
 
-def get_catalog(coord,radius=1*units.arcmin,photoz=True,
-                photoobj_fields=None,
-                timeout=None,
-                print_query=False):
+def get_catalog(coord,radius=1*units.arcmin, photoobj_fields=None,
+                timeout=None, print_query=False):
     """
-    Get all objects within a given
+    Query SDSS for all objects within a given
     radius of the input coordinates.
-    Optionally get photometric redshift
-    estimates.
-    """
 
-    if not photoz:
-        return SDSS.query_region(coord, radius=radius, timeout=timeout,photoobj_fields=photoobj_fields)
+    Merges photometry with photo-z
+
+    TODO -- Expand to include spectroscopy?
+    TODO -- Trim down multiple sources in photometric table (probably after merging with photo-z)
+
+    Args:
+        coord: astropy.coordiantes.SkyCoord
+        radius: Angle, optional
+          Search radius
+        photoobj_fields: list
+          Fields for querying
+        timeout: float, optional
+        print_query: bool, optional
+          Print the SQL query for the photo-z values
+
+    Returns:
+        catalog: astropy.table.Table
+          Contains all measurements retieved
+          *WARNING* :: The SDSS photometry table frequently has multiple entries for a given
+          source, with unique objid values
+
+    """
 
     if photoobj_fields is None:
         photoobj_fs = ['ra', 'dec', 'objid', 'run', 'rerun', 'camcol', 'field']
@@ -112,17 +93,48 @@ def get_catalog(coord,radius=1*units.arcmin,photoz=True,
         magsErr = ['petroMagErr_u', 'petroMagErr_g', 'petroMagErr_r', 'petroMagErr_i', 'petroMagErr_z']
         photoobj_fields = photoobj_fs+mags+magsErr
 
+    # Call
+    photom_catalog = SDSS.query_region(coord, radius=radius, timeout=timeout,
+                                     photoobj_fields=photoobj_fields)
+
+    # Now query for photo-z
+
     query = "SELECT GN.distance, "
-    for field in photoobj_fields:
-        query += "p.{:s}, ".format(field)
+    #for field in photoobj_fields:
+    #    query += "p.{:s}, ".format(field)
+    query += "p.objid, "
 
     query += "pz.z as redshift, pz.zErr as redshift_error\n"
     query += "FROM PhotoObjAll as p\n"
-    query += "JOIN dbo.fGetNearbyObjEq({:f},{:f},{:f}) AS GN\nON GN.objID=p.objID\n".format(coord.ra.value,coord.dec.value,radius.to(units.arcmin).value)
+    query += "JOIN dbo.fGetNearbyObjEq({:f},{:f},{:f}) AS GN\nON GN.objID=p.objID\n".format(
+        coord.ra.value,coord.dec.value,radius.to('arcmin').value)
     query += "JOIN Photoz AS pz ON pz.objID=p.objID\n"
     query += "ORDER BY distance"
 
     if print_query:
         print(query)
 
-    return SDSS.query_sql(query,timeout=timeout)
+    photz_cat = SDSS.query_sql(query,timeout=timeout)
+
+    # Match em up
+    from specdb.cat_utils import match_ids
+    matches = match_ids(photz_cat['objid'], photom_catalog['objid'], require_in_match=False)
+    gdz = matches > 0
+    # Init
+    photom_catalog['z'] = -9999.
+    photom_catalog['z_error'] = -9999.
+    # Fill
+    photom_catalog['z'][matches[gdz]] = photz_cat['redshift'][np.where(gdz)]
+    photom_catalog['z_error'][matches[gdz]] = photz_cat['redshift_error'][np.where(gdz)]
+
+    # Sort by offset
+    catalog = photom_catalog.copy()
+    phot_coords = SkyCoord(ra=catalog['ra'], dec=catalog['dec'], unit='deg')
+    seps = coord.separation(phot_coords)
+    catalog['separation'] = seps.to('arcsec').value
+    isrt = np.argsort(seps)
+    catalog = catalog[isrt]
+
+    # Return
+    return catalog
+
