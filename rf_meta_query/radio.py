@@ -26,14 +26,14 @@ def query_first(frbc, radius=1*units.arcmin, write_meta=False, verbose=False, me
     first_catalog.meta['radius'] = radius.to('arcmin').value
     # Clean
     catalog_utils.clean_heasarc(first_catalog)
-    first_catalog['FLUX_20_CM'].unit = units.mJy
-    first_catalog['FLUX_20_CM_ERROR'].unit = units.mJy
+    for key in ['FLUX_20_CM', 'FLUX_20_CM_ERROR', 'INT_FLUX_20_CM']:
+        first_catalog[key].unit = units.mJy
 
-    first_catalog.meta['photom'] = 'FLUX_20_CM'
-    first_catalog.meta['photom_mag'] = False
+    first_catalog.meta['phot_clm'] = 'FLUX_20_CM'
+    first_catalog.meta['phot_mag'] = False
 
     # Summarize
-    first_summary = catalog_utils.summarize_catalog(frbc, first_catalog, 1*units.arcmin, 'FLUX_20_CM', magnitude=False)
+    first_summary = catalog_utils.summarize_catalog(frbc, first_catalog, 1*units.arcmin)
     summary_list += [first_summary]
 
     # Sort by coord
