@@ -83,8 +83,8 @@ def query_hearsarc(frbc, mission, radius):
 
 def summarize_catalog(frbc, catalog, summary_radius):
     # Init
-    photom_column = catalog.meta['photom_column']
-    magnitude = catalog.meta['photom_mag']
+    photom_column = catalog.meta['phot_clm']
+    magnitude = catalog.meta['phot_mag']
     summary_list = []
     coords = SkyCoord(ra=catalog['ra'], dec=catalog['dec'], unit='deg')
     # Find all within the summary radius

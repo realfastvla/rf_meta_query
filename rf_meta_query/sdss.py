@@ -192,8 +192,8 @@ def query(frbc, meta_dir=None, verbose=False, imsize=30., write_meta=False):
 
     # Meta
     sdss_cat.meta['survey'] = survey
-    sdss_cat.meta['photom_column'] = 'petroMag_r'
-    sdss_cat.meta['photom_mag'] = True
+    sdss_cat.meta['phot_clm'] = 'petroMag_r'
+    sdss_cat.meta['phot_mag'] = True
     # Write?
     if write_meta:
         meta_io.write_catalog(sdss_cat, meta_dir, verbose=verbose)

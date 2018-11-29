@@ -70,8 +70,8 @@ def query_nvss(frbc, radius=1*units.arcmin, write_meta=False, verbose=False, met
     nvss_catalog['FLUX_20_CM'].unit = units.mJy
     nvss_catalog['FLUX_20_CM_ERROR'].unit = units.mJy
 
-    nvss_catalog.meta['photom_column'] = 'FLUX_20_CM'
-    nvss_catalog.meta['photom_mag'] = False
+    nvss_catalog.meta['phot_clm'] = 'FLUX_20_CM'
+    nvss_catalog.meta['phot_mag'] = False
 
     # Summarize
     nvss_summary = catalog_utils.summarize_catalog(frbc, nvss_catalog, 1*units.arcmin)
