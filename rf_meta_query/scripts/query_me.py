@@ -36,7 +36,7 @@ def main(pargs):
     import numpy as np
 
     from rf_meta_query import frb_cand
-    from rf_meta_query import sdss
+    from rf_meta_query import sdss, des
     from rf_meta_query import meta_io
     from rf_meta_query import images
     from rf_meta_query import dm
@@ -51,6 +51,11 @@ def main(pargs):
     # SDSS catalog
     sdss_cat = sdss.get_catalog(frbc['coord'])
     meta_io.write_table(sdss_cat, meta_dir, 'sdss_catalog', verbose=pargs.verbose)
+
+    #DES catalog
+    des_cat = des.get_catalog(frbc['coord'])
+    meta_io.write_table(des_cat, meta_dir, 'des_catalog', verbose=pargs.verbose)
+    
     # In the database?
     if len(sdss_cat) is not None:  # This is a bit risky as a small radius might return None
         # SDSS cutout Image
