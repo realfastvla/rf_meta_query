@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Check a DB file from specdb
+Perform the meta query on an input coordinate
 """
 from __future__ import (print_function, absolute_import, division, unicode_literals)
 
@@ -38,7 +38,7 @@ def main(pargs):
 
     from rf_meta_query import frb_cand
     from rf_meta_query import sdss
-    from rf_meta_query import io as rfmq_io
+    from rf_meta_query import meta_io
     from rf_meta_query import images
     from rf_meta_query import dm
 
@@ -47,11 +47,11 @@ def main(pargs):
     frbc = frb_cand.build_frb_cand(ra, dec)
 
     # Meta dir
-    meta_dir = rfmq_io.meta_dir(frbc, create=True)
+    meta_dir = meta_io.meta_dir(frbc, create=True)
 
     # SDSS catalog
     sdss_cat = sdss.get_catalog(frbc['coord'])
-    rfmq_io.write_table(sdss_cat, meta_dir, 'sdss_catalog', verbose=pargs.verbose)
+    meta_io.write_table(sdss_cat, meta_dir, 'sdss_catalog', verbose=pargs.verbose)
     # In the database?
     if len(sdss_cat) is not None:  # This is a bit risky as a small radius might return None
         # SDSS cutout Image
@@ -61,7 +61,7 @@ def main(pargs):
         # Prep plot
         plt = images.gen_snapshot_plt(img, imsize)
         # Write
-        rfmq_io.save_plt(plt, meta_dir, 'sdss_snap', verbose=pargs.verbose)
+        meta_io.save_plt(plt, meta_dir, 'sdss_snap', verbose=pargs.verbose)
 
         # SDSS DM
         close_obj = sdss_cat['separation'] < 1. # arcsec

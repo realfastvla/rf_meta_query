@@ -6,8 +6,17 @@ from PIL import Image
 
 from matplotlib import pyplot as plt
 
-
 def grab_from_url(url):
+    """
+    Grab a PIL Image from a URL
+
+    Args:
+        url: str
+
+    Returns:
+        img: PIL.Image
+
+    """
     # Simple calls
     rtv = requests.get(url)
     img = Image.open(BytesIO(rtv.content))
@@ -16,6 +25,20 @@ def grab_from_url(url):
 
 
 def gen_snapshot_plt(img, imsize, show=False):
+    """
+    Generate a simple figure from an input PIL.Image
+
+    Args:
+        img: PIL.Image
+        imsize: float (arcsec)
+          Angular dimension of the image in arcsec
+        show: bool, optional
+          Show to the screen?  If done, will need to regenerate to then save to disk
+
+    Returns:
+        plt: matplotlib.pyplot object
+
+    """
     plt.clf()
     plt.imshow(img, aspect='equal', extent=(-imsize / 2., imsize / 2, -imsize / 2., imsize / 2))
     # Label me
