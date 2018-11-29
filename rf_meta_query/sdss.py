@@ -103,7 +103,7 @@ def get_catalog(coord,radius=1*units.arcmin, photoobj_fields=None,
     # Call
     photom_catalog = SDSS.query_region(coord, radius=radius, timeout=timeout,
                                      photoobj_fields=photoobj_fields)
-    if len(photom_catalog) == 0:
+    if photom_catalog is None:
         return None
 
     # Now query for photo-z

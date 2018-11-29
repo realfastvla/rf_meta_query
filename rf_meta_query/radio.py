@@ -16,9 +16,9 @@ def query_nvss(frbc, radius=1*units.arcmin, write_meta=False, verbose=False, met
         meta_dir = meta_io.meta_dir(frbc)
 
     # Query
-    nvss_catalog, catalog_list = catalog_utils.query_hearsarc(frbc, 'nvss', radius)
-    summary_list += catalog_list
+    nvss_catalog = catalog_utils.query_hearsarc(frbc, 'nvss', radius)
     if nvss_catalog is None:
+        summary_list += ["{}: There are no sources found within {}".format(survey, radius)]
         return nvss_catalog, summary_list
 
     # Meta + Massage -- NVSS specific

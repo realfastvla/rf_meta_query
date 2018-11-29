@@ -66,13 +66,11 @@ def match_ids(IDs, match_IDs, require_in_match=True):
     return rows
 
 def query_hearsarc(frbc, mission, radius):
-    summary_list = []
     try:
         catalog = heasarc.query_region(frbc['coord'], mission=mission, radius=radius)
-    except ValueError:  # No table found
+    except (ValueError, TypeError):  # No table found
         catalog = None
-        summary_list += ["There are no {:s} sources within the search radius".format(mission)]
-    return catalog, summary_list
+    return catalog
 
 
 def summarize_catalog(frbc, catalog, summary_radius, photom_column, magnitude=True):
