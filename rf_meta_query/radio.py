@@ -1,30 +1,49 @@
 """ Modules related to radio catalogs, etc."""
+import pdb
 
 from astropy import units
 
-from astroquery.heasarc import Heasarc
 
 from rf_meta_query import catalog_utils
+from rf_meta_query import meta_io
 
+def query_nvss(frbc, radius=1*units.arcmin, write_meta=False, verbose=False, meta_dir=None):
+    survey = 'NVSS'
+    summary_list = []
 
-def query_nvss(frbc, radius=1*units.arcmin):
-    # Instantiate
-    heasarc = Heasarc()
+    # Meta dir
+    if meta_dir is None:
+        meta_dir = meta_io.meta_dir(frbc)
+
     # Query
-    try:
-        nvss_catalog = heasarc.query_region(frbc['coord'], mission='nvss', radius=radius)
-    except ValueError:  # No table found
-        nvss_catalog = None
-    else:
-        # Survey
-        nvss_catalog.meta['survey'] = 'NVSS'
-        # Rename
-        nvss_catalog.rename_column("RA", "ra")
-        nvss_catalog.rename_column("DEC", "dec")
-        # Sort by coord
-        nvss_catalog = catalog_utils.sort_by_separation(nvss_catalog, frbc['coord'], radec=('ra', 'dec'))
-        # Meta
-        nvss_catalog.meta['radius'] = radius.to('arcmin').value
+    nvss_catalog, catalog_list = catalog_utils.query_hearsarc(frbc, 'nvss', radius)
+    summary_list += catalog_list
+    if nvss_catalog is None:
+        return nvss_catalog, summary_list
+
+    # Meta + Massage -- NVSS specific
+    nvss_catalog.meta['survey'] = 'NVSS'
+    nvss_catalog.meta['radius'] = radius.to('arcmin').value
+    nvss_catalog.rename_column("RA", "ra")
+    nvss_catalog.rename_column("DEC", "dec")
+    for key in ['ra', 'dec']:
+        nvss_catalog[key].unit = units.deg
+    nvss_catalog['FLUX_20_CM'].unit = units.mJy
+    nvss_catalog['FLUX_20_CM_ERROR'].unit = units.mJy
+
+    nvss_catalog.meta['photom'] = 'FLUX_20_CM'
+    nvss_catalog.meta['photom_mag'] = False
+
+    # Summarize
+    nvss_summary = catalog_utils.summarize_catalog(frbc, nvss_catalog, 1*units.arcmin, 'FLUX_20_CM', magnitude=False)
+    summary_list += [nvss_summary]
+
+    # Sort by coord
+    nvss_catalog = catalog_utils.sort_by_separation(nvss_catalog, frbc['coord'], radec=('ra', 'dec'))
+
+    # Write?
+    if write_meta:
+        meta_io.write_catalog(nvss_catalog, meta_dir, verbose=verbose)
 
     # Return
-    return nvss_catalog
+    return nvss_catalog, nvss_summary

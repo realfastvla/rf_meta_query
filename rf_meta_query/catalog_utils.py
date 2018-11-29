@@ -4,6 +4,10 @@ import pdb
 
 from astropy.coordinates import SkyCoord
 
+from astroquery.heasarc import Heasarc
+
+# Instantiate
+heasarc = Heasarc()
 
 def sort_by_separation(catalog, coord, radec=('ra','dec'), add_sep=True):
 
@@ -61,19 +65,29 @@ def match_ids(IDs, match_IDs, require_in_match=True):
     rows[in_match] = indices
     return rows
 
-def summarize_catalog(frbc, catalog, summary_radius, photom_column, mangitude=True):
+def query_hearsarc(frbc, mission, radius):
+    summary_list = []
+    try:
+        catalog = heasarc.query_region(frbc['coord'], mission=mission, radius=radius)
+    except ValueError:  # No table found
+        catalog = None
+        summary_list += ["There are no {:s} sources within the search radius".format(mission)]
+    return catalog, summary_list
+
+
+def summarize_catalog(frbc, catalog, summary_radius, photom_column, magnitude=True):
     summary_list = []
     coords = SkyCoord(ra=catalog['ra'], dec=catalog['dec'], unit='deg')
     # Find all within the summary radius
     seps = frbc['coord'].separation(coords)
     in_radius = seps < summary_radius
     # Start summarizing
-    summary_list += ['{:s}: There are {:d} sources within {:0.1f} arcsec'.format(
+    summary_list += ['{:s}: There are {:d} source(s) within {:0.1f} arcsec'.format(
         catalog.meta['survey'], np.sum(in_radius), summary_radius.to('arcsec').value)]
     # If any found
     if np.any(in_radius):
         # Brightest
-        if mangitude:
+        if magnitude:
             brightest = np.argmin(catalog[photom_column][in_radius])
         else:
             brightest = np.argmax(catalog[photom_column][in_radius])
@@ -82,7 +96,7 @@ def summarize_catalog(frbc, catalog, summary_radius, photom_column, mangitude=Tr
             catalog[photom_column][in_radius][brightest])]
         # Closest
         closest = np.argmin(seps)
-        summary_list += ['{:s}: The closest source at separation {:0.2f} arcsec has {:s} of {:0.2f}'.format(
+        summary_list += ['{:s}: The closest source is at separation {:0.2f} arcsec and has {:s} of {:0.2f}'.format(
             catalog.meta['survey'],
             seps[in_radius][closest].to('arcsec').value,
             photom_column, catalog[photom_column][in_radius][brightest])]

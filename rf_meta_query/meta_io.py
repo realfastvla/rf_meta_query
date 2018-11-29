@@ -6,8 +6,10 @@ import io
 
 from astropy import units
 
+from rf_meta_query import frb_cand
 
-def meta_dir(frbc, precision=(2,1), create=False):
+
+def meta_dir(frbc, create=False):
     """
     Generate a folder name for the meta data
 
@@ -24,8 +26,7 @@ def meta_dir(frbc, precision=(2,1), create=False):
     """
 
     # JName
-    Jname = 'J{:s}{:s}'.format(frbc['coord'].ra.to_string(unit=units.hour, sep='',pad=True,precision=precision[0]),
-                              frbc['coord'].dec.to_string(sep='',pad=True,alwayssign=True,precision=precision[1]))
+    Jname = frb_cand.jname(frbc)
     # Name name
     name = 'meta_{:s}'.format(Jname)
 
@@ -91,7 +92,7 @@ def write_frbc(frbc, meta_dir):
         f.write(json.dumps(j_frbc, sort_keys=True, indent=4, separators=(',', ': ')))
 
 
-def write_table(tbl, meta_dir, root, ftype='fits', verbose=False):
+def write_catalog(tbl, meta_dir, ftype='fits', verbose=False):
     """
     Write an input astropy Table to disk
 
@@ -108,6 +109,7 @@ def write_table(tbl, meta_dir, root, ftype='fits', verbose=False):
     Returns:
 
     """
+    root = tbl.meta['survey']
     # Outfile
     basename = root+'.{:s}'.format(ftype)
     outfile = os.path.join(meta_dir, basename)

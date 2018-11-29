@@ -1,9 +1,10 @@
 """ Simple methods for building and using frb_cand object"""
 
 from astropy.coordinates import SkyCoord
+from astropy import units
 
 
-def build_frb_cand(ra, dec, **kwargs):
+def build_frb_cand(ra, dec, id, **kwargs):
     """
 
     Args:
@@ -18,8 +19,9 @@ def build_frb_cand(ra, dec, **kwargs):
     """
     # Dict for now, might make it a Class later
     frb_cand = {}
-    frb_cand['RA'] = ra
-    frb_cand['DEC'] = dec
+    frb_cand['ra'] = ra
+    frb_cand['dec'] = dec
+    frb_cand['id'] = id
 
     # Coordinate
     frb_cand['coord'] = SkyCoord(ra=ra, dec=dec, unit='deg')
@@ -30,3 +32,8 @@ def build_frb_cand(ra, dec, **kwargs):
 
     # Return
     return frb_cand
+
+def jname(frbc, precision=(2,1)):
+    Jname = 'J{:s}{:s}'.format(frbc['coord'].ra.to_string(unit=units.hour, sep='',pad=True,precision=precision[0]),
+                               frbc['coord'].dec.to_string(sep='',pad=True,alwayssign=True,precision=precision[1]))
+    return Jname
