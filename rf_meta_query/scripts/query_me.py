@@ -83,6 +83,12 @@ def main(pargs):
                                                                             nvss_cat[0]['separation']))
         print("The brighest NVSS source in radius {} arcmin has flux: {} mJy".format(nvss_cat.meta['radius'],
                                                                          nvss_cat[0]['FLUX_20_CM']))
+        # Write to disk
+        meta_io.write_table(nvss_cat, meta_dir, 'nvss_catalog', verbose=pargs.verbose)
+    else:
+        print("There are no NVSS sources within the search radius")
+
+
 
 
 
