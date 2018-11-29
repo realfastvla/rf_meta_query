@@ -192,7 +192,7 @@ def query(frbc, meta_dir=None, verbose=False, imsize=30., write_meta=False):
     sdss_cat.meta['survey'] = 'SDSS'
     # Write?
     if write_meta:
-        meta_io.write_table(sdss_cat, meta_dir, 'sdss_catalog', verbose=verbose)
+        meta_io.write_catalog(sdss_cat, meta_dir, verbose=verbose)
     # Summarize
     summary_list += catalog_utils.summarize_catalog(frbc, sdss_cat, 5*units.arcsec, 'petroMag_r')
 
@@ -202,7 +202,7 @@ def query(frbc, meta_dir=None, verbose=False, imsize=30., write_meta=False):
         img = images.grab_from_url(sdss_url)
         # Prep plot
         plt = images.gen_snapshot_plt(img, imsize)
-        meta_io.save_plt(plt, meta_dir, 'sdss_snap', verbose=verbose)
+        meta_io.save_plt(plt, meta_dir, 'SDSS_snap', verbose=verbose)
 
     # SDSS DM
     close_obj = sdss_cat['separation'] < 1. # arcsec
