@@ -43,6 +43,8 @@ def main(pargs):
     from rf_meta_query import dm
     from rf_meta_query import radio
 
+    summary_list = []
+
     # FRB Candidate object
     ra, dec = pargs.radec.split(',')
     frbc = frb_cand.build_frb_cand(ra, dec)
@@ -50,31 +52,12 @@ def main(pargs):
     # Meta dir
     meta_dir = meta_io.meta_dir(frbc, create=True)
 
-    # SDSS catalog
-    sdss_cat = sdss.get_catalog(frbc['coord'])
-    if len(sdss_cat) is not None:
-        meta_io.write_table(sdss_cat, meta_dir, 'sdss_catalog', verbose=pargs.verbose)
-    # In the database?
-    if len(sdss_cat) is not None:  # This is a bit risky as a small radius might return None
-        # SDSS cutout Image
-        imsize = 30.  # arcsec
-        sdss_url = sdss.get_url(frbc['coord'], imsize=imsize/60.)  # arcmin
-        img = images.grab_from_url(sdss_url)
-        # Prep plot
-        plt = images.gen_snapshot_plt(img, imsize)
-        # Write
-        meta_io.save_plt(plt, meta_dir, 'sdss_snap', verbose=pargs.verbose)
+    # SDSS
+    sdss_cat, sdss_summary = sdss.query(frbc, meta_dir=meta_dir)
+    summary_list += sdss_summary
+    for item in summary_list:
+        print(item)
 
-        # SDSS DM
-        close_obj = sdss_cat['separation'] < 1. # arcsec
-        gdz = sdss_cat['z_error'][close_obj] > 0.
-        if np.any(gdz):
-            ibest = np.argmin(sdss_cat['z_error'][close_obj][gdz])
-            frbc['z'] = sdss_cat['z'][close_obj][gdz][ibest]
-            print("SDSS photo-z = {}".format(frbc['z']))
-            # DM
-            DM_best = dm.best_dm_from_z(frbc)
-            print("DM_FRB = {} pc/cm^3".format(DM_best))
 
     # NVSS
     nvss_cat = radio.query_nvss(frbc)

@@ -6,6 +6,7 @@ from astroquery.heasarc import Heasarc
 
 from rf_meta_query import catalog_utils
 
+
 def query_nvss(frbc, radius=1*units.arcmin):
     # Instantiate
     heasarc = Heasarc()
@@ -15,8 +16,13 @@ def query_nvss(frbc, radius=1*units.arcmin):
     except ValueError:  # No table found
         nvss_catalog = None
     else:
+        # Survey
+        nvss_catalog.meta['survey'] = 'NVSS'
+        # Rename
+        nvss_catalog.rename_column("RA", "ra")
+        nvss_catalog.rename_column("DEC", "dec")
         # Sort by coord
-        nvss_catalog = catalog_utils.sort_by_separation(nvss_catalog, frbc['coord'], radec=("RA","DEC"))
+        nvss_catalog = catalog_utils.sort_by_separation(nvss_catalog, frbc['coord'], radec=('ra', 'dec'))
         # Meta
         nvss_catalog.meta['radius'] = radius.to('arcmin').value
 

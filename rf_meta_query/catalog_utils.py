@@ -27,3 +27,66 @@ def sort_by_separation(catalog, coord, radec=('ra','dec'), add_sep=True):
     # Return
     return srt_catalog
 
+def match_ids(IDs, match_IDs, require_in_match=True):
+    """ Match input IDs to another array of IDs (usually in a table)
+    Return the rows aligned with input IDs
+
+    Parameters
+    ----------
+    IDs : ndarray
+    match_IDs : ndarray
+    require_in_match : bool, optional
+      Require that each of the input IDs occurs within the match_IDs
+
+    Returns
+    -------
+    rows : ndarray
+      Rows in match_IDs that match to IDs, aligned
+      -1 if there is no match
+
+    """
+    rows = -1 * np.ones_like(IDs).astype(int)
+    # Find which IDs are in match_IDs
+    in_match = np.in1d(IDs, match_IDs)
+    if require_in_match:
+        if np.sum(~in_match) > 0:
+            raise IOError("qcat.match_ids: One or more input IDs not in match_IDs")
+    rows[~in_match] = -1
+    #
+    IDs_inmatch = IDs[in_match]
+    # Find indices of input IDs in meta table -- first instance in meta only!
+    xsorted = np.argsort(match_IDs)
+    ypos = np.searchsorted(match_IDs, IDs_inmatch, sorter=xsorted)
+    indices = xsorted[ypos]
+    rows[in_match] = indices
+    return rows
+
+def summarize_catalog(frbc, catalog, summary_radius, photom_column, mangitude=True):
+    summary_list = []
+    coords = SkyCoord(ra=catalog['ra'], dec=catalog['dec'], unit='deg')
+    # Find all within the summary radius
+    seps = frbc['coord'].separation(coords)
+    in_radius = seps < summary_radius
+    # Start summarizing
+    summary_list += ['{:s}: There are {:d} sources within {:0.1f} arcsec'.format(
+        catalog.meta['survey'], np.sum(in_radius), summary_radius.to('arcsec').value)]
+    # If any found
+    if np.any(in_radius):
+        # Brightest
+        if mangitude:
+            brightest = np.argmin(catalog[photom_column][in_radius])
+        else:
+            brightest = np.argmax(catalog[photom_column][in_radius])
+        summary_list += ['{:s}: The brightest source has {:s} of {:0.2f}'.format(
+            catalog.meta['survey'], photom_column,
+            catalog[photom_column][in_radius][brightest])]
+        # Closest
+        closest = np.argmin(seps)
+        summary_list += ['{:s}: The closest source at separation {:0.2f} arcsec has {:s} of {:0.2f}'.format(
+            catalog.meta['survey'],
+            seps[in_radius][closest].to('arcsec').value,
+            photom_column, catalog[photom_column][in_radius][brightest])]
+    # Return
+    return summary_list
+
+
