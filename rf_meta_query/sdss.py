@@ -15,6 +15,7 @@ from rf_meta_query import images
 from rf_meta_query import dm
 from rf_meta_query import catalog_utils
 
+survey = 'SDSS'
 
 def get_url(coord, imsize=30., scale=0.39612, grid=None, label=None, invert=None):
     """
@@ -189,12 +190,15 @@ def query(frbc, meta_dir=None, verbose=False, imsize=30., write_meta=False):
         summary_list += ['SDSS: No sources.  Likely outside its footprint']
         return sdss_cat, summary_list
 
-    sdss_cat.meta['survey'] = 'SDSS'
+    # Meta
+    sdss_cat.meta['survey'] = survey
+    sdss_cat.meta['photom_column'] = 'petroMag_r'
+    sdss_cat.meta['photom_mag'] = True
     # Write?
     if write_meta:
         meta_io.write_catalog(sdss_cat, meta_dir, verbose=verbose)
     # Summarize
-    summary_list += catalog_utils.summarize_catalog(frbc, sdss_cat, 5*units.arcsec, 'petroMag_r')
+    summary_list += catalog_utils.summarize_catalog(frbc, sdss_cat, 5*units.arcsec)
 
     # SDSS cutout Image?
     if write_meta:
@@ -210,9 +214,9 @@ def query(frbc, meta_dir=None, verbose=False, imsize=30., write_meta=False):
     if np.any(gdz):
         ibest = np.argmin(sdss_cat['z_error'][close_obj][gdz])
         frbc['z'] = sdss_cat['z'][close_obj][gdz][ibest]
-        print("SDSS photo-z = {}".format(frbc['z']))
+        summary_list += ["{:s}: photo-z = {}".format(survey, frbc['z'])]
         # DM
         DM_best = dm.best_dm_from_z(frbc)
-        print("DM_FRB = {} pc/cm^3".format(DM_best))
+        summary_list += ["{:s}: DM_FRB = {} pc/cm^3".format(survey, DM_best)]
 
     return sdss_cat, summary_list
