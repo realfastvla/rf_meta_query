@@ -11,35 +11,6 @@ from astroquery.sdss import SDSS
 from rf_meta_query import catalog_utils
 
 
-def get_photom(coord, radius=0.5*units.arcmin, timeout=30.):
-    """
-
-    Args:
-        coord: SkyCoord
-        radius: Angle (or Quantity), optional
-          search radius for sources
-        timeout: float, optional
-
-    Returns:
-        phot_catalog: Table
-
-    """
-
-    # Meta data of interest
-    photoobj_fs = ['ra', 'dec', 'objid', 'run', 'rerun', 'camcol', 'field']
-    mags = ['petroMag_u', 'petroMag_g', 'petroMag_r', 'petroMag_i', 'petroMag_z']
-    magsErr = ['petroMagErr_u', 'petroMagErr_g', 'petroMagErr_r', 'petroMagErr_i', 'petroMagErr_z']
-
-    # Call
-    phot_catalog = SDSS.query_region(coord, radius=radius, timeout=timeout,
-                                     photoobj_fields=photoobj_fs + mags + magsErr)
-
-    # Remove duplicates?
-
-    # Return
-    return phot_catalog
-
-
 def get_url(coord, imsize=30., scale=0.39612, grid=None, label=None, invert=None):
     """
     Generate the SDSS URL for an image retrieval
@@ -89,19 +60,34 @@ def get_url(coord, imsize=30., scale=0.39612, grid=None, label=None, invert=None
     return url
 
 
-def get_catalog(coord,radius=1*units.arcmin,photoz=True,
-                photoobj_fields=None,
-                timeout=None,
-                print_query=False):
+def get_catalog(coord,radius=1*units.arcmin, photoobj_fields=None,
+                timeout=None, print_query=False):
     """
-    Get all objects within a given
+    Query SDSS for all objects within a given
     radius of the input coordinates.
-    Optionally get photometric redshift
-    estimates.
-    """
 
-    if not photoz:
-        return SDSS.query_region(coord, radius=radius, timeout=timeout,photoobj_fields=photoobj_fields)
+    Merges photometry with photo-z
+
+    TODO -- Expand to include spectroscopy?
+    TODO -- Trim down multiple sources in photometric table (probably after merging with photo-z)
+
+    Args:
+        coord: astropy.coordiantes.SkyCoord
+        radius: Angle, optional
+          Search radius
+        photoobj_fields: list
+          Fields for querying
+        timeout: float, optional
+        print_query: bool, optional
+          Print the SQL query for the photo-z values
+
+    Returns:
+        catalog: astropy.table.Table
+          Contains all measurements retieved
+          *WARNING* :: The SDSS photometry table frequently has multiple entries for a given
+          source, with unique objid values
+
+    """
 
     if photoobj_fields is None:
         photoobj_fs = ['ra', 'dec', 'objid', 'run', 'rerun', 'camcol', 'field']
