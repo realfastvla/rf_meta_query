@@ -79,9 +79,9 @@ def main(pargs):
     # NVSS
     nvss_cat = radio.query_nvss(frbc)
     if nvss_cat is not None:
-        print("The closest source has flux: {} mJy at separation {:0.2f} arcmin".format(nvss_cat[0]['FLUX_20_CM'],
+        print("The closest NVSS source has flux: {} mJy at separation {:0.2f} arcmin".format(nvss_cat[0]['FLUX_20_CM'],
                                                                             nvss_cat[0]['separation']))
-        print("The brighest source in radius {} arcmin has flux: {} mJy".format(nvss_cat.meta['radius'],
+        print("The brighest NVSS source in radius {} arcmin has flux: {} mJy".format(nvss_cat.meta['radius'],
                                                                          nvss_cat[0]['FLUX_20_CM']))
 
 
