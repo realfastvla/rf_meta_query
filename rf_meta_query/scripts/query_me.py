@@ -88,8 +88,6 @@ def main(pargs):
     else:
         print("There are no NVSS sources within the search radius")
 
-
-
     # Finish by writing the FRB candidate object too
     meta_io.write_frbc(frbc, meta_dir)
 
