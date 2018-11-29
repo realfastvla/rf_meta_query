@@ -1,6 +1,8 @@
 """ Module for handling meta_query I/O """
 
 import os
+import json
+import io
 
 from astropy import units
 
@@ -61,6 +63,32 @@ def save_plt(plt, meta_dir, root, verbose=False, ftype='png'):
     plt.savefig(outfile, dpi=300)
     if verbose:
         print("Wrote: {:s}".format(outfile))
+
+
+def write_frbc(frbc, meta_dir):
+    """
+    Write the frbc object to disk
+
+    Pops out a few non-JSON compliant objects
+    after making a copy
+
+    Args:
+        frbc: FRB Candidate object
+        meta_dir: str
+          Folder for output
+
+    Returns:
+
+    """
+    # Pop out non-JSON compliant items
+    j_frbc = frbc.copy()
+    for key in ['coord']:
+        if key in j_frbc.keys():
+            j_frbc.pop(key)
+    outfile = os.path.join(meta_dir, 'frbc.json')
+    # Write me
+    with io.open(outfile, 'w', encoding='utf-8') as f:
+        f.write(json.dumps(j_frbc, sort_keys=True, indent=4, separators=(',', ': ')))
 
 
 def write_table(tbl, meta_dir, root, ftype='fits', verbose=False):

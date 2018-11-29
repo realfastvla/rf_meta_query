@@ -84,5 +84,6 @@ def main(pargs):
         print("The brighest NVSS source in radius {} arcmin has flux: {} mJy".format(nvss_cat.meta['radius'],
                                                                          nvss_cat[0]['FLUX_20_CM']))
 
-
+    # Finish by writing the FRB candidate object too
+    meta_io.write_frbc(frbc, meta_dir)
 
