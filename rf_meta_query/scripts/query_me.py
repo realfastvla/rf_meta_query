@@ -13,7 +13,6 @@ def parser(options=None):
     parser = argparse.ArgumentParser(description='Run the query for meta data on a given FRB candidate [v1.1]')
     parser.add_argument("radec", type=str, help="Comma-separated RA,DEC in deg (ICRS, J2000).  e.g. 232.23141,23.2237")
     parser.add_argument("-v", "--verbose", default=False, help="Verbose output?", action='store_true')
-    #parser.add_argument("-llist", default='ISM', action='store_true', help="Name of LineList:  ISM, HI, H2, CO, etc.")
 
     if options is None:
         pargs = parser.parse_args()
