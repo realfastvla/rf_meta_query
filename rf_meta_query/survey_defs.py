@@ -19,3 +19,8 @@ realfast_params['NVSS'] = dict(radius=1*units.arcmin,
                               cutout_size=None,
                               phot_clm='FLUX_20_CM',
                               phot_mag=False)
+realfast_params['FIRST'] = dict(radius=1*units.arcmin,
+                               summary_radius=30*units.arcsec,
+                               cutout_size=None,
+                               phot_clm='FLUX_20_CM',
+                               phot_mag=False)

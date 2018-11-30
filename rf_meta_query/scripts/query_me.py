@@ -34,7 +34,6 @@ def main(pargs):
 
     """
     import warnings
-    from astropy import units
 
     from frb.surveys import survey_utils
 
@@ -44,7 +43,7 @@ def main(pargs):
     from rf_meta_query import catalog_utils
 
     # ADD HERE
-    survey_names = ['SDSS', 'NVSS', 'DES']
+    survey_names = ['SDSS', 'NVSS', 'FIRST', 'DES']
 
     # FRB Candidate object
     ra, dec = pargs.radec.split(',')
