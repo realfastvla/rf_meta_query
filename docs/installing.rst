@@ -36,6 +36,7 @@ to install and/or update these packages.
 * `PIL <https://pillow.readthedocs.io/en/5.3.x/>`_  version 5.3 or later
 * `FRB <https://github.com/FRBs/FRB>`_ master branch
 * `NE2001 <https://github.com/FRBs/ne2001>`_ master branch
+* `astroquery <https://github.com/FRBs/FRB>`_ v3.8 or later
 
 If you are using Anaconda, you can check the presence of these packages with::
 

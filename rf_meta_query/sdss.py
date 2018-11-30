@@ -5,9 +5,17 @@ import pdb
 
 from astropy import units
 from astropy.coordinates import SkyCoord
+from astropy.coordinates import match_coordinates_sky
 
 from astroquery.sdss import SDSS
 
+from rf_meta_query import catalog_utils
+from rf_meta_query import meta_io
+from rf_meta_query import images
+from rf_meta_query import dm
+from rf_meta_query import catalog_utils
+
+survey = 'SDSS'
 
 def get_url(coord, imsize=30., scale=0.39612, grid=None, label=None, invert=None):
     """
@@ -96,6 +104,8 @@ def get_catalog(coord,radius=1*units.arcmin, photoobj_fields=None,
     # Call
     photom_catalog = SDSS.query_region(coord, radius=radius, timeout=timeout,
                                      photoobj_fields=photoobj_fields)
+    if photom_catalog is None:
+        return None
 
     # Now query for photo-z
 
@@ -117,8 +127,7 @@ def get_catalog(coord,radius=1*units.arcmin, photoobj_fields=None,
     photz_cat = SDSS.query_sql(query,timeout=timeout)
 
     # Match em up
-    from specdb.cat_utils import match_ids
-    matches = match_ids(photz_cat['objid'], photom_catalog['objid'], require_in_match=False)
+    matches = catalog_utils.match_ids(photz_cat['objid'], photom_catalog['objid'], require_in_match=False)
     gdz = matches > 0
     # Init
     photom_catalog['z'] = -9999.
@@ -127,14 +136,87 @@ def get_catalog(coord,radius=1*units.arcmin, photoobj_fields=None,
     photom_catalog['z'][matches[gdz]] = photz_cat['redshift'][np.where(gdz)]
     photom_catalog['z_error'][matches[gdz]] = photz_cat['redshift_error'][np.where(gdz)]
 
+    # Trim down catalog
+    trim_catalog = trim_down_catalog(photom_catalog, keep_photoz=True)
+
     # Sort by offset
-    catalog = photom_catalog.copy()
-    phot_coords = SkyCoord(ra=catalog['ra'], dec=catalog['dec'], unit='deg')
-    seps = coord.separation(phot_coords)
-    catalog['separation'] = seps.to('arcsec').value
-    isrt = np.argsort(seps)
-    catalog = catalog[isrt]
+    catalog = trim_catalog.copy()
+    catalog = catalog_utils.sort_by_separation(catalog, coord, radec=('ra','dec'), add_sep=True)
+
+    # Meta
+    catalog.meta['radius'] = radius
 
     # Return
     return catalog
 
+def trim_down_catalog(catalog, keep_photoz=False, cut_within=1.5*units.arcsec):
+
+    # All good
+    keep = np.ones_like(catalog, dtype=bool)
+
+    coords = SkyCoord(ra=catalog['ra'], dec=catalog['dec'], unit='deg')
+    # Search on closest next neighbor
+    idx, d2d, d3d = match_coordinates_sky(coords, coords, nthneighbor=2)
+    too_close = np.where(d2d < cut_within)[0]
+    for idx in too_close:
+        # Already purged?
+        if not keep[idx]:
+            continue
+        # Find the matches
+        seps = coords[idx].separation(coords)
+        orig_matches = np.where((seps < cut_within) & keep)[0]
+        final_matches = orig_matches.copy()
+        # Keep photo-z?
+        if keep_photoz:
+            good_pz = catalog['z'][final_matches] > -9000.
+            if np.any(good_pz):
+                final_matches = final_matches[good_pz]
+        # Take the first one -- Any reason to do otherwise?
+        final_match = final_matches[0]
+        # Zero out the rest
+        zero_me = orig_matches != final_match
+        keep[orig_matches[zero_me]] = False
+    # Finish
+    return catalog[keep]
+
+
+def query(frbc, meta_dir=None, verbose=False, imsize=30., write_meta=False):
+    # Init
+    summary_list = []
+    # SDSS catalog
+    sdss_cat = get_catalog(frbc['coord'])
+    # In the database?
+    if sdss_cat is None:  # This is a bit risky as a small radius might return None
+        summary_list += ['SDSS: No sources.  Likely outside its footprint']
+        return sdss_cat, summary_list
+
+    # Meta -- radius is set with the catalog
+    sdss_cat.meta['survey'] = survey
+    sdss_cat.meta['phot_clm'] = 'petroMag_r'
+    sdss_cat.meta['phot_mag'] = True
+    # Write?
+    if write_meta:
+        meta_io.write_catalog(sdss_cat, meta_dir, verbose=verbose)
+    # Summarize
+    summary_list += catalog_utils.summarize_catalog(frbc, sdss_cat, 5*units.arcsec)
+
+    # SDSS cutout Image?
+    if write_meta:
+        sdss_url = get_url(frbc['coord'], imsize=imsize/60.)  # arcmin
+        img = images.grab_from_url(sdss_url)
+        # Prep plot
+        plt = images.gen_snapshot_plt(img, imsize)
+        meta_io.save_plt(plt, meta_dir, 'SDSS_snap', verbose=verbose)
+
+    # SDSS DM
+    close_obj = sdss_cat['separation'] < 1. # arcsec
+    gdz = sdss_cat['z_error'][close_obj] > 0.
+    if np.any(gdz):
+        ibest = np.argmin(sdss_cat['z_error'][close_obj][gdz])
+        frbc['z'] = sdss_cat['z'][close_obj][gdz][ibest]
+        summary_list += ["{:s}: photo-z = {}".format(survey, frbc['z'])]
+        # DM
+        DM_best = dm.best_dm_from_z(frbc)
+        summary_list += ["{:s}: DM_FRB = {} pc/cm^3".format(survey, DM_best)]
+
+    return sdss_cat, summary_list

@@ -12,6 +12,7 @@ def parser(options=None):
     # Parse
     parser = argparse.ArgumentParser(description='Run the query for meta data on a given FRB candidate [v1.1]')
     parser.add_argument("radec", type=str, help="Comma-separated RA,DEC in deg (ICRS, J2000).  e.g. 232.23141,23.2237")
+    parser.add_argument("-w", "--write_meta", default=False, help="Write Meta to folder?", action='store_true')
     parser.add_argument("-v", "--verbose", default=False, help="Verbose output?", action='store_true')
 
     if options is None:
@@ -33,69 +34,43 @@ def main(pargs):
 
     """
     import warnings
-    import numpy as np
+    from astropy import units
 
     from rf_meta_query import frb_cand
     from rf_meta_query import sdss, des
     from rf_meta_query import meta_io
     from rf_meta_query import images
     from rf_meta_query import dm
-    from astropy import units
+    from rf_meta_query import radio
+
 
     # FRB Candidate object
     ra, dec = pargs.radec.split(',')
-    frbc = frb_cand.build_frb_cand(ra, dec)
+    frbc = frb_cand.build_frb_cand(ra, dec, 11111)
+
+    summary_list = ['----------------------------------------------------------------']
+    summary_list += ['FRB Candidate ID-{:d} towards {:s}'.format(frbc['id'], frb_cand.jname(frbc))]
 
     # Meta dir
-    meta_dir = meta_io.meta_dir(frbc, create=True)
+    meta_dir = meta_io.meta_dir(frbc, create=pargs.write_meta)
 
-    # SDSS catalog
-    sdss_cat = sdss.get_catalog(frbc['coord'])
-    meta_io.write_table(sdss_cat, meta_dir, 'sdss_catalog', verbose=pargs.verbose)
+    # SDSS
+    sdss_cat, sdss_summary = sdss.query(frbc, meta_dir=meta_dir, write_meta=pargs.write_meta)
+    summary_list += sdss_summary
 
-    # In the database?
-    if len(sdss_cat) is not None:  # This is a bit risky as a small radius might return None
-        # SDSS cutout Image
-        imsize = 30.  # arcsec
-        sdss_url = sdss.get_url(frbc['coord'], imsize=imsize/60.)  # arcmin
-        img = images.grab_from_url(sdss_url)
-        # Prep plot
-        plt = images.gen_snapshot_plt(img, imsize)
-        # Write
-        meta_io.save_plt(plt, meta_dir, 'sdss_snap', verbose=pargs.verbose)
+    # NVSS
+    nvss_cat, nvss_summary = radio.query_nvss(frbc, write_meta=pargs.write_meta)
+    summary_list += nvss_summary
 
-        # SDSS DM
-        close_obj = sdss_cat['separation'] < 1. # arcsec
-        gdz = sdss_cat['z_error'][close_obj] > 0.
-        if np.any(gdz):
-            ibest = np.argmin(sdss_cat['z_error'][close_obj][gdz])
-            frbc['z'] = sdss_cat['z'][close_obj][gdz][ibest]
-            print("SDSS photo-z = {}".format(frbc['z']))
-            # DM
-            DM_best = dm.best_dm_from_z(frbc)
-            print("DM_FRB = {} pc/cm^3".format(DM_best))
-    
-    #DES catalog
-    des_cat = des.get_catalog(frbc['coord'])
-    
-    if len(des_cat) is not 0:
-        #Write DES catalog to file
-        meta_io.write_table(des_cat, meta_dir, 'des_catalog', verbose=pargs.verbose)
-        
-        #DES cutout images
-        radius = 0.5*units.arcmin
-        imghdu = des.download_deepest_image(frbc['coord'],radius,band="r").data
-        
-        #Create plot
-        plt = images.gen_snapshot_plt(img,radius.to(units.arcsec).value)
+    # DES
+    des_cat, des_summary = des.query(frbc, meta_dir=meta_dir, write_meta=pargs.write_meta)
+    summary_list += des_summary
 
-        # Write
-        meta_io.save_plt(plt, meta_dir, 'sdss_snap', verbose=pargs.verbose)
-    else:
-        print("No DES data available.")
+    # Finish by writing the FRB candidate object too
+    if pargs.write_meta:
+        meta_io.write_frbc(frbc, meta_dir)
 
-
-
-
-
-
+    # Print me
+    summary_list += ['----------------------------------------------------------------']
+    for item in summary_list:
+        print(item)
