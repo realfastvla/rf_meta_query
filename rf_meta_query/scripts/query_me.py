@@ -36,13 +36,11 @@ def main(pargs):
     import warnings
     from astropy import units
 
+    from frb.surveys import survey_utils
+
     from rf_meta_query import frb_cand
-    from rf_meta_query import sdss, des
     from rf_meta_query import meta_io
-    from rf_meta_query import images
-    from rf_meta_query import dm
-    from rf_meta_query import radio
-    from rf_meta_query import survey_utils
+    from rf_meta_query import survey_defs
     from rf_meta_query import catalog_utils
 
     # ADD HERE
@@ -55,7 +53,7 @@ def main(pargs):
     # Load surveys
     surveys = {}
     for survey_name in survey_names:
-        radius = survey_utils.realfast_params[survey_name]['radius']
+        radius = survey_defs.realfast_params[survey_name]['radius']
         surveys[survey_name] = survey_utils.load_survey_by_name(survey_name, frbc['coord'], radius)
 
     summary_list = ['----------------------------------------------------------------']
@@ -64,7 +62,7 @@ def main(pargs):
     # Meta dir
     meta_dir = meta_io.meta_dir(frbc, create=pargs.write_meta)
 
-    # Load catalog and simple summary
+    # Load catalog and generate simple summary
     for survey_name in surveys.keys():
         # Generate catalog (as possible)
         survey = surveys[survey_name]
@@ -72,9 +70,26 @@ def main(pargs):
         # Summarize
         summary_list += catalog_utils.summarize_catalog(
             frbc, survey.catalog,
-            survey_utils.realfast_params[survey_name]['summary_radius'],
-            survey_utils.realfast_params[survey_name]['phot_clm'],
-            survey_utils.realfast_params[survey_name]['phot_mag'])
+            survey_defs.realfast_params[survey_name]['summary_radius'],
+            survey_defs.realfast_params[survey_name]['phot_clm'],
+            survey_defs.realfast_params[survey_name]['phot_mag'])
+        # Write?
+        if pargs.write_meta:
+            survey.write_catalog(out_dir=meta_dir)
+
+
+    # Cut-out
+    cutout_order = ['SDSS']
+    for corder in cutout_order:  # Loop until we generate one
+        survey = surveys[corder]
+        # Query if the catalog exists.  If empty, assume a cut-out cannot be made
+        if len(survey.catalog) == 0:
+            continue
+        # Generate
+        _ = survey.get_cutout(survey_defs.realfast_params[corder]['cutout_size'])
+        # Write
+        survey.write_cutout(output_dir=meta_dir)
+
 
 
     '''
