@@ -47,6 +47,19 @@ def query_first(frbc, radius=1*units.arcmin, write_meta=False, verbose=False, me
     return first_catalog, first_summary
 
 def query_nvss(frbc, radius=1*units.arcmin, write_meta=False, verbose=False, meta_dir=None):
+    """
+    Perform an NVSS query
+
+    Args:
+        frbc:
+        radius:
+        write_meta:
+        verbose:
+        meta_dir:
+
+    Returns:
+
+    """
     survey = 'NVSS'
     summary_list = []
 
