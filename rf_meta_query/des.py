@@ -136,7 +136,20 @@ def get_catalog(coord,radius=1*units.arcmin, query_fields=None,
         tbl.meta['radius'] = radius
         return tbl
 
+
 def query(frbc, meta_dir=None, verbose=False, write_meta=False):
+    """
+    Perform a DES query
+
+    Args:
+        frbc:
+        meta_dir:
+        verbose:
+        write_meta:
+
+    Returns:
+
+    """
     # Init
     summary_list = []
     #DES catalog

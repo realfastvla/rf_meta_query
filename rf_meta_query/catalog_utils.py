@@ -10,7 +10,22 @@ from astroquery.heasarc import Heasarc
 heasarc = Heasarc()
 
 def sort_by_separation(catalog, coord, radec=('ra','dec'), add_sep=True):
+    """
+    Sort an input catalog by separation from input coordinate
 
+    Args:
+        catalog: astropy.table.Table
+        coord: SkyCoord
+        radec: tuple
+          Defines catalog columns holding RA, DEC (in deg)
+        add_sep: bool, optional
+          Add a 'separation' column with units of arcmin
+
+    Returns:
+        srt_catalog: astropy.table.Table
+          Sorted catalog
+
+    """
     # Check
     for key in radec:
         if key not in catalog.keys():
@@ -65,7 +80,20 @@ def match_ids(IDs, match_IDs, require_in_match=True):
     rows[in_match] = indices
     return rows
 
+
 def query_hearsarc(frbc, mission, radius):
+    """
+    Use astroquery to query the HEARSARC database
+
+    Args:
+        frbc:
+        mission: str
+          Uses HEASARC notation
+        radius: Angle
+
+    Returns:
+
+    """
     try:
         catalog = heasarc.query_region(frbc['coord'], mission=mission, radius=radius)
     except (ValueError, TypeError):  # No table found
@@ -76,6 +104,20 @@ def query_hearsarc(frbc, mission, radius):
 
 
 def summarize_catalog(frbc, catalog, summary_radius):
+    """
+    Generate simple text describing the sourcese from
+    an input catalog within a given radius
+
+    Args:
+        frbc: FRB Candidate object
+        catalog: astropy.table.Table
+        summary_radius: Angle
+
+    Returns:
+        summary_list: list
+          List of comments on the catalog
+
+    """
     # Init
     photom_column = catalog.meta['phot_clm']
     magnitude = catalog.meta['phot_mag']
