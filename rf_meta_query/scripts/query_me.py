@@ -79,16 +79,17 @@ def main(pargs):
 
     # Cut-out
     cutout_order = ['DES', 'SDSS']
-    for corder in cutout_order:  # Loop until we generate one
-        survey = surveys[corder]
-        # Query if the catalog exists.  If empty, assume a cut-out cannot be made
-        if len(survey.catalog) == 0:
-            continue
-        # Generate
-        _ = survey.get_cutout(survey_defs.realfast_params[corder]['cutout_size'])
-        # Write
-        survey.write_cutout(output_dir=meta_dir)
-        break
+    if pargs.write_meta:
+        for corder in cutout_order:  # Loop until we generate one
+            survey = surveys[corder]
+            # Query if the catalog exists.  If empty, assume a cut-out cannot be made
+            if len(survey.catalog) == 0:
+                continue
+            # Generate
+            _ = survey.get_cutout(survey_defs.realfast_params[corder]['cutout_size'])
+            # Write
+            survey.write_cutout(output_dir=meta_dir)
+            break
 
 
 
