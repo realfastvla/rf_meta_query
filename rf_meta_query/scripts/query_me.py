@@ -58,6 +58,10 @@ def main(pargs):
     sdss_cat, sdss_summary = sdss.query(frbc, meta_dir=meta_dir, write_meta=pargs.write_meta)
     summary_list += sdss_summary
 
+    # FIRST
+    first_cat, first_summary = radio.query_first(frbc, write_meta=pargs.write_meta)
+    summary_list += first_summary
+
     # NVSS
     nvss_cat, nvss_summary = radio.query_nvss(frbc, write_meta=pargs.write_meta)
     summary_list += nvss_summary

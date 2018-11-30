@@ -3,11 +3,19 @@ import numpy as np
 import pdb
 
 from astropy.coordinates import SkyCoord
+from astropy import units
 
 from astroquery.heasarc import Heasarc
 
 # Instantiate
 heasarc = Heasarc()
+
+def clean_heasarc(catalog):
+    # RA/DEC
+    catalog.rename_column("RA", "ra")
+    catalog.rename_column("DEC", "dec")
+    for key in ['ra', 'dec']:
+        catalog[key].unit = units.deg
 
 def sort_by_separation(catalog, coord, radec=('ra','dec'), add_sep=True):
     """
