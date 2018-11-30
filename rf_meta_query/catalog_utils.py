@@ -111,15 +111,19 @@ def query_hearsarc(frbc, mission, radius):
     return catalog
 
 
-def summarize_catalog(frbc, catalog, summary_radius):
+def summarize_catalog(frbc, catalog, summary_radius, photom_column, magnitude):
     """
-    Generate simple text describing the sourcese from
+    Generate simple text describing the sources from
     an input catalog within a given radius
 
     Args:
         frbc: FRB Candidate object
         catalog: astropy.table.Table
         summary_radius: Angle
+        photom_column: str
+          Column specifying which flux to work on
+        magnitude: bool
+          Is the flux a magnitude?
 
     Returns:
         summary_list: list
@@ -127,8 +131,6 @@ def summarize_catalog(frbc, catalog, summary_radius):
 
     """
     # Init
-    photom_column = catalog.meta['phot_clm']
-    magnitude = catalog.meta['phot_mag']
     summary_list = []
     coords = SkyCoord(ra=catalog['ra'], dec=catalog['dec'], unit='deg')
     # Find all within the summary radius

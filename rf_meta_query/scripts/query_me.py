@@ -42,11 +42,21 @@ def main(pargs):
     from rf_meta_query import images
     from rf_meta_query import dm
     from rf_meta_query import radio
+    from rf_meta_query import survey_utils
+    from rf_meta_query import catalog_utils
 
+    # ADD HERE
+    survey_names = ['SDSS']
 
     # FRB Candidate object
     ra, dec = pargs.radec.split(',')
     frbc = frb_cand.build_frb_cand(ra, dec, 11111)
+
+    # Load surveys
+    surveys = {}
+    for survey_name in survey_names:
+        radius = survey_utils.realfast_params[survey_name]['radius']
+        surveys[survey_name] = survey_utils.load_survey_by_name(survey_name, frbc['coord'], radius)
 
     summary_list = ['----------------------------------------------------------------']
     summary_list += ['FRB Candidate ID-{:d} towards {:s}'.format(frbc['id'], frb_cand.jname(frbc))]
@@ -54,6 +64,20 @@ def main(pargs):
     # Meta dir
     meta_dir = meta_io.meta_dir(frbc, create=pargs.write_meta)
 
+    # Load catalog and simple summary
+    for survey_name in surveys.keys():
+        # Generate catalog (as possible)
+        survey = surveys[survey_name]
+        survey.get_catalog()
+        # Summarize
+        summary_list += catalog_utils.summarize_catalog(
+            frbc, survey.catalog,
+            survey_utils.realfast_params[survey_name]['summary_radius'],
+            survey_utils.realfast_params[survey_name]['phot_clm'],
+            survey_utils.realfast_params[survey_name]['phot_mag'])
+
+
+    '''
     # SDSS
     sdss_cat, sdss_summary = sdss.query(frbc, meta_dir=meta_dir, write_meta=pargs.write_meta)
     summary_list += sdss_summary
@@ -69,6 +93,7 @@ def main(pargs):
     # DES
     des_cat, des_summary = des.query(frbc, meta_dir=meta_dir, write_meta=pargs.write_meta)
     summary_list += des_summary
+    '''
 
     # Finish by writing the FRB candidate object too
     if pargs.write_meta:
