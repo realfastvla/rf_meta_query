@@ -36,10 +36,11 @@ def main(pargs):
     import numpy as np
 
     from rf_meta_query import frb_cand
-    from rf_meta_query import sdss
+    from rf_meta_query import sdss, des
     from rf_meta_query import meta_io
     from rf_meta_query import images
     from rf_meta_query import dm
+    from astropy import units
 
     # FRB Candidate object
     ra, dec = pargs.radec.split(',')
@@ -51,6 +52,7 @@ def main(pargs):
     # SDSS catalog
     sdss_cat = sdss.get_catalog(frbc['coord'])
     meta_io.write_table(sdss_cat, meta_dir, 'sdss_catalog', verbose=pargs.verbose)
+
     # In the database?
     if len(sdss_cat) is not None:  # This is a bit risky as a small radius might return None
         # SDSS cutout Image
@@ -72,6 +74,26 @@ def main(pargs):
             # DM
             DM_best = dm.best_dm_from_z(frbc)
             print("DM_FRB = {} pc/cm^3".format(DM_best))
+    
+    #DES catalog
+    des_cat = des.get_catalog(frbc['coord'])
+    
+    if len(des_cat) is not 0:
+        #Write DES catalog to file
+        meta_io.write_table(des_cat, meta_dir, 'des_catalog', verbose=pargs.verbose)
+        
+        #DES cutout images
+        radius = 0.5*units.arcmin
+        imghdu = des.download_deepest_image(frbc['coord'],radius,band="r").data
+        
+        #Create plot
+        plt = images.gen_snapshot_plt(img,radius.to(units.arcsec).value)
+
+        # Write
+        meta_io.save_plt(plt, meta_dir, 'sdss_snap', verbose=pargs.verbose)
+    else:
+        print("No DES data available.")
+
 
 
 
