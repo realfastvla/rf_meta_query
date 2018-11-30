@@ -39,6 +39,7 @@ def main(pargs):
 
     from rf_meta_query import frb_cand
     from rf_meta_query import meta_io
+    from rf_meta_query import dm
     from rf_meta_query import survey_defs
     from rf_meta_query import catalog_utils
 
@@ -76,6 +77,17 @@ def main(pargs):
         if pargs.write_meta and (len(survey.catalog) > 0):
             survey.write_catalog(out_dir=meta_dir)
 
+    # DM? -- SDSS only for now
+    if 'SDSS' in surveys.keys():
+        survey = surveys['SDSS']
+        if len(survey.catalog) > 0:
+            # Closest within 5" ?
+            if survey.catalog['separation'][0] < (5./60):
+                # Valid value?
+                if survey.catalog['photo_z'][0] > -9000.:
+                    frbc['z'] = survey.catalog['photo_z'][0]
+                    DM = dm.best_dm_from_z(frbc)
+                    summary_list += ['DM:  Using the photo_z of the closest galaxy within 5", DM={:0.1f}'.format(DM)]
 
     # Cut-out
     cutout_order = ['DES', 'SDSS']
@@ -92,24 +104,6 @@ def main(pargs):
             break
 
 
-
-    '''
-    # SDSS
-    sdss_cat, sdss_summary = sdss.query(frbc, meta_dir=meta_dir, write_meta=pargs.write_meta)
-    summary_list += sdss_summary
-
-    # FIRST
-    first_cat, first_summary = radio.query_first(frbc, write_meta=pargs.write_meta)
-    summary_list += first_summary
-
-    # NVSS
-    nvss_cat, nvss_summary = radio.query_nvss(frbc, write_meta=pargs.write_meta)
-    summary_list += nvss_summary
-
-    # DES
-    des_cat, des_summary = des.query(frbc, meta_dir=meta_dir, write_meta=pargs.write_meta)
-    summary_list += des_summary
-    '''
 
     # Finish by writing the FRB candidate object too
     if pargs.write_meta:
