@@ -71,6 +71,7 @@ def download_deepest_image(coord,fov=0.1*units.deg,band='g',timeout=120,verbose=
     else:
         print ('No image available.')
         image=None
+        return image
     
     return image[0]
 
