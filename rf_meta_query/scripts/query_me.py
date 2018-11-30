@@ -14,7 +14,6 @@ def parser(options=None):
     parser.add_argument("radec", type=str, help="Comma-separated RA,DEC in deg (ICRS, J2000).  e.g. 232.23141,23.2237")
     parser.add_argument("-w", "--write_meta", default=False, help="Write Meta to folder?", action='store_true')
     parser.add_argument("-v", "--verbose", default=False, help="Verbose output?", action='store_true')
-    #parser.add_argument("-llist", default='ISM', action='store_true', help="Name of LineList:  ISM, HI, H2, CO, etc.")
 
     if options is None:
         pargs = parser.parse_args()
@@ -35,10 +34,13 @@ def main(pargs):
 
     """
     import warnings
+    from astropy import units
 
     from rf_meta_query import frb_cand
-    from rf_meta_query import sdss
+    from rf_meta_query import sdss, des
     from rf_meta_query import meta_io
+    from rf_meta_query import images
+    from rf_meta_query import dm
     from rf_meta_query import radio
 
 
@@ -63,6 +65,25 @@ def main(pargs):
     # Finish by writing the FRB candidate object too
     if pargs.write_meta:
         meta_io.write_frbc(frbc, meta_dir)
+
+    #DES catalog
+    des_cat = des.get_catalog(frbc['coord'])
+
+    if len(des_cat) is not 0:
+        #Write DES catalog to file
+        meta_io.write_table(des_cat, meta_dir, 'des_catalog', verbose=pargs.verbose)
+
+        #DES cutout images
+        radius = 0.5*units.arcmin
+        imghdu = des.download_deepest_image(frbc['coord'],radius,band="r").data
+
+        #Create plot
+        plt = images.gen_snapshot_plt(img,radius.to(units.arcsec).value)
+
+        # Write
+        meta_io.save_plt(plt, meta_dir, 'sdss_snap', verbose=pargs.verbose)
+    else:
+        print("No DES data available.")
 
     # Print me
     summary_list += ['----------------------------------------------------------------']
