@@ -62,28 +62,13 @@ def main(pargs):
     nvss_cat, nvss_summary = radio.query_nvss(frbc, write_meta=pargs.write_meta)
     summary_list += nvss_summary
 
+    # DES
+    des_cat, des_summary = des.query(frbc, meta_dir=meta_dir, write_meta=pargs.write_meta)
+    summary_list += des_summary
+
     # Finish by writing the FRB candidate object too
     if pargs.write_meta:
         meta_io.write_frbc(frbc, meta_dir)
-
-    #DES catalog
-    des_cat = des.get_catalog(frbc['coord'])
-
-    if len(des_cat) is not 0:
-        #Write DES catalog to file
-        meta_io.write_table(des_cat, meta_dir, 'des_catalog', verbose=pargs.verbose)
-
-        #DES cutout images
-        radius = 0.5*units.arcmin
-        imghdu = des.download_deepest_image(frbc['coord'],radius,band="r").data
-
-        #Create plot
-        plt = images.gen_snapshot_plt(img,radius.to(units.arcsec).value)
-
-        # Write
-        meta_io.save_plt(plt, meta_dir, 'sdss_snap', verbose=pargs.verbose)
-    else:
-        print("No DES data available.")
 
     # Print me
     summary_list += ['----------------------------------------------------------------']

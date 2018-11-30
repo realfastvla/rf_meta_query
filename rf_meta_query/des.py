@@ -6,21 +6,26 @@ taken from https://datalab.noao.edu/desdr1/analysis/DwarfGalaxyDESDR1_20171101.h
 (credits to Knut Olsen, Robert Nikutta, Stephanie Juneau & NOAO Data Lab Team)
 and modified slightly (by Sunil Simha).
 """
-
 from __future__ import print_function
+
+import pdb
+
 import numpy as np
-from astropy.coordinates import SkyCoord
 from astropy.table import Table
 from pyvo.dal import sia
 from astropy import units, io, utils
 from dl import queryClient as qc, authClient as ac, helpers
 
+from rf_meta_query import meta_io
+from rf_meta_query import images
+from rf_meta_query import catalog_utils
 
 token = ac.login('anonymous')
 
 _DEF_ACCESS_URL = "https://datalab.noao.edu/sia/des_dr1"
 _svc = sia.SIAService(_DEF_ACCESS_URL)
 
+survey = "DES"
 
 def download_deepest_image(coord,fov=0.1*units.deg,band='g',timeout=120,verbose=False):
     """
@@ -35,7 +40,7 @@ def download_deepest_image(coord,fov=0.1*units.deg,band='g',timeout=120,verbose=
     band: str, optional
         DES photometric band names.
         "g","r","i","z" and "Y" are the only
-        allowed latters (case-insensitive).
+        allowed filters (case-insensitive).
     timeout: float, optional
         Image download timeout in seconds.
         Default value: 120s.
@@ -49,8 +54,8 @@ def download_deepest_image(coord,fov=0.1*units.deg,band='g',timeout=120,verbose=
     dec = coord.dec.value
     fov = fov.to(units.deg).value
 
-    if band not in ["g","r","i","z","Y","G","R","I","Z","y"]:
-        raise TypeError("Allowed letters (case-insensitive) for DES photometric bands are 'g','r','i','z','Y'")
+    if band.lower() not in ["g","r","i","z","y"]:
+        raise TypeError("Allowed filters (case-insensitive) for DES photometric bands are 'g','r','i','z','Y'")
 
     imgTable = _svc.search((ra,dec), (fov/np.cos(dec*np.pi/180), fov), verbosity=2).to_table()
     if verbose:
@@ -124,5 +129,46 @@ def get_catalog(coord,radius=1*units.arcmin, query_fields=None,
     # TODO:: Suppress the print output from convert
     # TODO:: Dig into why the heck it doesn't want to natively
     #        output to a table when it was clearly intended to with 'outfmt=table'
-    cat = Table.from_pandas(cat)
-    return cat
+    if len(cat) == 0:
+        return None
+    else:
+        tbl = Table.from_pandas(cat)
+        tbl.meta['radius'] = radius
+        return tbl
+
+def query(frbc, meta_dir=None, verbose=False, write_meta=False):
+    # Init
+    summary_list = []
+    #DES catalog
+    des_cat = get_catalog(frbc['coord'])
+
+    if des_cat is None:
+        summary_list += ['{:s}: No sources.  Likely outside its footprint'.format(survey)]
+        return des_cat, summary_list
+
+    # Add meta
+    des_cat.meta['survey'] = survey
+    des_cat.meta['phot_clm'] = 'mag_auto_r'
+    des_cat.meta['phot_mag'] = True
+
+    # Summarize
+    summary_list += catalog_utils.summarize_catalog(frbc, des_cat, 5*units.arcsec)
+
+    # DES cut-out image?
+    if write_meta:
+        meta_io.write_catalog(des_cat, meta_dir, verbose=verbose)
+
+        #DES cutout images
+        radius = 0.5*units.arcmin
+        imghdu = download_deepest_image(frbc['coord'],radius,band="r")
+
+        #Create plot
+        img = imghdu.data
+        plt = images.gen_snapshot_plt(img,radius.to(units.arcsec).value)
+
+        # Write
+        meta_io.save_plt(plt, meta_dir, 'des_cutout', verbose=verbose)
+
+    # Return
+    return des_cat, summary_list
+

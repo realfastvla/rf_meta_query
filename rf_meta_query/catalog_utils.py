@@ -98,7 +98,7 @@ def summarize_catalog(frbc, catalog, summary_radius):
             catalog.meta['survey'], photom_column,
             catalog[photom_column][in_radius][brightest])]
         # Closest
-        closest = np.argmin(seps)
+        closest = np.argmin(seps[in_radius])
         summary_list += ['{:s}: The closest source is at separation {:0.2f} arcsec and has {:s} of {:0.2f}'.format(
             catalog.meta['survey'],
             seps[in_radius][closest].to('arcsec').value,
