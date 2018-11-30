@@ -60,8 +60,12 @@ def summarize_catalog(frbc, catalog, summary_radius, photom_column, magnitude):
     """
     # Init
     summary_list = []
-    coords = SkyCoord(ra=catalog['ra'], dec=catalog['dec'], unit='deg')
+    # Empty catalog?
+    if len(catalog) == 0:
+        summary_list += ['{:s}: There were no cataloged sources from this survey.'.format(catalog.meta['survey'])]
+        return summary_list
     # Find all within the summary radius
+    coords = SkyCoord(ra=catalog['ra'], dec=catalog['dec'], unit='deg')
     seps = frbc['coord'].separation(coords)
     in_radius = seps < summary_radius
     # Start summarizing

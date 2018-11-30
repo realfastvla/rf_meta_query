@@ -44,7 +44,7 @@ def main(pargs):
     from rf_meta_query import catalog_utils
 
     # ADD HERE
-    survey_names = ['SDSS']
+    survey_names = ['SDSS', 'DES']
 
     # FRB Candidate object
     ra, dec = pargs.radec.split(',')
@@ -66,20 +66,20 @@ def main(pargs):
     for survey_name in surveys.keys():
         # Generate catalog (as possible)
         survey = surveys[survey_name]
-        survey.get_catalog()
+        _ = survey.get_catalog()
         # Summarize
         summary_list += catalog_utils.summarize_catalog(
             frbc, survey.catalog,
             survey_defs.realfast_params[survey_name]['summary_radius'],
             survey_defs.realfast_params[survey_name]['phot_clm'],
             survey_defs.realfast_params[survey_name]['phot_mag'])
-        # Write?
-        if pargs.write_meta:
+        # Write catalog?
+        if pargs.write_meta and (len(survey.catalog) > 0):
             survey.write_catalog(out_dir=meta_dir)
 
 
     # Cut-out
-    cutout_order = ['SDSS']
+    cutout_order = ['DES', 'SDSS']
     for corder in cutout_order:  # Loop until we generate one
         survey = surveys[corder]
         # Query if the catalog exists.  If empty, assume a cut-out cannot be made
@@ -89,6 +89,7 @@ def main(pargs):
         _ = survey.get_cutout(survey_defs.realfast_params[corder]['cutout_size'])
         # Write
         survey.write_cutout(output_dir=meta_dir)
+        break
 
 
 
