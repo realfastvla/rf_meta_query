@@ -23,7 +23,6 @@ def query_nvss(frbc, radius=1*units.arcmin, write_meta=False, verbose=False, met
 
     # Meta + Massage -- NVSS specific
     nvss_catalog.meta['survey'] = 'NVSS'
-    nvss_catalog.meta['radius'] = radius.to('arcmin').value
     nvss_catalog.rename_column("RA", "ra")
     nvss_catalog.rename_column("DEC", "dec")
     for key in ['ra', 'dec']:

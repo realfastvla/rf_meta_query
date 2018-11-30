@@ -70,6 +70,8 @@ def query_hearsarc(frbc, mission, radius):
         catalog = heasarc.query_region(frbc['coord'], mission=mission, radius=radius)
     except (ValueError, TypeError):  # No table found
         catalog = None
+    else:
+        catalog.meta['radius'] = radius
     return catalog
 
 
