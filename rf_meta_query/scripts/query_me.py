@@ -44,7 +44,7 @@ def main(pargs):
     from rf_meta_query import catalog_utils
 
     # ADD HERE
-    survey_names = ['SDSS', 'NVSS', 'FIRST', 'DES']
+    survey_names = ['SDSS', 'NVSS', 'FIRST', 'DES', 'DECaL']
 
     # FRB Candidate object
     ra, dec = pargs.radec.split(',')
@@ -98,7 +98,7 @@ def main(pargs):
             if len(survey.catalog) == 0:
                 continue
             # Generate
-            _, _ = survey.get_cutout(survey_defs.realfast_params[corder]['cutout_size'])
+            _ = survey.get_cutout(survey_defs.realfast_params[corder]['cutout_size'])
             # Write
             survey.write_cutout(output_dir=meta_dir)
             break

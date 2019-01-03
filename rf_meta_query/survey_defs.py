@@ -24,3 +24,8 @@ realfast_params['FIRST'] = dict(radius=1*units.arcmin,
                                cutout_size=None,
                                phot_clm='FLUX_20_CM',
                                phot_mag=False)
+realfast_params['DECaL'] = dict(radius=30*units.arcsec,
+                                summary_radius=5*units.arcsec,
+                                cutout_size=10*units.arcsec,
+                                phot_clm='DECaL_r',
+                                phot_mag=False)
