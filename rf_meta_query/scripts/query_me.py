@@ -44,7 +44,7 @@ def main(pargs):
     from rf_meta_query import catalog_utils
 
     # ADD HERE
-    survey_names = ['SDSS', 'NVSS', 'FIRST', 'DES', 'DECaL']
+    survey_names = ['SDSS', 'NVSS', 'FIRST', 'DES', 'DECaL', 'PSRCAT']
 
     # FRB Candidate object
     ra, dec = pargs.radec.split(',')
