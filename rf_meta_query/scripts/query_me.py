@@ -98,7 +98,7 @@ def main(pargs):
             if len(survey.catalog) == 0:
                 continue
             # Generate
-            _ = survey.get_cutout(survey_defs.realfast_params[corder]['cutout_size'])
+            _, _ = survey.get_cutout(survey_defs.realfast_params[corder]['cutout_size'])
             # Write
             survey.write_cutout(output_dir=meta_dir)
             break
