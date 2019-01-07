@@ -44,7 +44,7 @@ def main(pargs):
     from rf_meta_query import catalog_utils
 
     # ADD HERE
-    survey_names = ['SDSS', 'NVSS', 'FIRST', 'DES', 'DECaL', 'PSRCAT']
+    survey_names = ['SDSS', 'NVSS', 'FIRST', 'WENSS', 'DES', 'DECaL', 'PSRCAT']
 
     # FRB Candidate object
     ra, dec = pargs.radec.split(',')
@@ -90,20 +90,20 @@ def main(pargs):
                     summary_list += ['DM:  Using the photo_z of the closest galaxy within 5", DM={:0.1f}'.format(DM)]
 
     # Cut-out
-    cutout_order = ['DES', 'SDSS']
+    cutout_order = ['DES', 'SDSS', 'FIRST', 'NVSS']
     if pargs.write_meta:
         for corder in cutout_order:  # Loop until we generate one
             survey = surveys[corder]
             # Query if the catalog exists.  If empty, assume a cut-out cannot be made
             if len(survey.catalog) == 0:
+                print("Survey {0} catalog query found no sources. Not getting cutout.".format(corder))
                 continue
+            else:
+                print("Getting cutout for survey {0}.".format(corder))
             # Generate
             _ = survey.get_cutout(survey_defs.realfast_params[corder]['cutout_size'])
             # Write
             survey.write_cutout(output_dir=meta_dir)
-            break
-
-
 
     # Finish by writing the FRB candidate object too
     if pargs.write_meta:
