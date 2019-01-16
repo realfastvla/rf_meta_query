@@ -7,7 +7,9 @@ from astropy import units
 from rf_meta_query import catalog_utils
 from rf_meta_query import meta_io
 
-def query_first(frbc, radius=1*units.arcmin, write_meta=False, verbose=False, meta_dir=None):
+
+def query_first(frbc, radius=1*units.arcmin, write_meta=False, verbose=False,
+                meta_dir=None):
     survey = 'FIRST'
     summary_list = []
 
@@ -18,7 +20,8 @@ def query_first(frbc, radius=1*units.arcmin, write_meta=False, verbose=False, me
     # Query
     first_catalog = catalog_utils.query_hearsarc(frbc, 'first', radius)
     if first_catalog is None:
-        summary_list += ["{}: There are no sources found within {}".format(survey, radius)]
+        summary_list += ["{}: There are no sources found within {}"
+                         .format(survey, radius)]
         return first_catalog, summary_list
 
     # Meta -- FIRST specific
@@ -33,11 +36,14 @@ def query_first(frbc, radius=1*units.arcmin, write_meta=False, verbose=False, me
     first_catalog.meta['phot_mag'] = False
 
     # Summarize
-    first_summary = catalog_utils.summarize_catalog(frbc, first_catalog, 1*units.arcmin)
+    first_summary = catalog_utils.summarize_catalog(frbc, first_catalog,
+                                                    1*units.arcmin)
     summary_list += [first_summary]
 
     # Sort by coord
-    first_catalog = catalog_utils.sort_by_separation(first_catalog, frbc['coord'], radec=('ra', 'dec'))
+    first_catalog = catalog_utils.sort_by_separation(first_catalog,
+                                                     frbc['coord'],
+                                                     radec=('ra', 'dec'))
 
     # Write?
     if write_meta:
@@ -46,7 +52,9 @@ def query_first(frbc, radius=1*units.arcmin, write_meta=False, verbose=False, me
     # Return
     return first_catalog, first_summary
 
-def query_nvss(frbc, radius=1*units.arcmin, write_meta=False, verbose=False, meta_dir=None):
+
+def query_nvss(frbc, radius=1*units.arcmin, write_meta=False, verbose=False,
+               meta_dir=None):
     survey = 'NVSS'
     summary_list = []
 
@@ -57,7 +65,8 @@ def query_nvss(frbc, radius=1*units.arcmin, write_meta=False, verbose=False, met
     # Query
     nvss_catalog = catalog_utils.query_hearsarc(frbc, 'nvss', radius)
     if nvss_catalog is None:
-        summary_list += ["{}: There are no sources found within {}".format(survey, radius)]
+        summary_list += ["{}: There are no sources found within {}"
+                         .format(survey, radius)]
         return nvss_catalog, summary_list
 
     # Meta + Massage -- NVSS specific
@@ -74,11 +83,14 @@ def query_nvss(frbc, radius=1*units.arcmin, write_meta=False, verbose=False, met
     nvss_catalog.meta['photom_mag'] = False
 
     # Summarize
-    nvss_summary = catalog_utils.summarize_catalog(frbc, nvss_catalog, 1*units.arcmin)
+    nvss_summary = catalog_utils.summarize_catalog(frbc, nvss_catalog,
+                                                   1*units.arcmin)
     summary_list += [nvss_summary]
 
     # Sort by coord
-    nvss_catalog = catalog_utils.sort_by_separation(nvss_catalog, frbc['coord'], radec=('ra', 'dec'))
+    nvss_catalog = catalog_utils.sort_by_separation(nvss_catalog,
+                                                    frbc['coord'],
+                                                    radec=('ra', 'dec'))
 
     # Write?
     if write_meta:
