@@ -32,8 +32,8 @@ def query_first(frbc, radius=1*units.arcmin, write_meta=False, verbose=False,
     for key in ['FLUX_20_CM', 'FLUX_20_CM_ERROR', 'INT_FLUX_20_CM']:
         first_catalog[key].unit = units.mJy
 
-    first_catalog.meta['phot_clm'] = 'FLUX_20_CM'
-    first_catalog.meta['phot_mag'] = False
+    first_catalog.meta['photom_column'] = 'FLUX_20_CM'
+    first_catalog.meta['photom_mag'] = False
 
     # Summarize
     first_summary = catalog_utils.summarize_catalog(frbc, first_catalog,
