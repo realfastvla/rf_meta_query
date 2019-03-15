@@ -10,6 +10,7 @@ from astroquery.heasarc import Heasarc
 # Instantiate
 heasarc = Heasarc()
 
+
 def clean_heasarc(catalog):
     # RA/DEC
     catalog.rename_column("RA", "ra")
@@ -17,7 +18,7 @@ def clean_heasarc(catalog):
     for key in ['ra', 'dec']:
         catalog[key].unit = units.deg
 
-def sort_by_separation(catalog, coord, radec=('ra','dec'), add_sep=True):
+def sort_by_separation(catalog, coord, radec=('ra', 'dec'), add_sep=True):
     """
     Sort an input catalog by separation from input coordinate
 
@@ -53,6 +54,7 @@ def sort_by_separation(catalog, coord, radec=('ra','dec'), add_sep=True):
     srt_catalog = catalog[isrt]
     # Return
     return srt_catalog
+
 
 def match_ids(IDs, match_IDs, require_in_match=True):
     """ Match input IDs to another array of IDs (usually in a table)
@@ -103,7 +105,8 @@ def query_hearsarc(frbc, mission, radius):
 
     """
     try:
-        catalog = heasarc.query_region(frbc['coord'], mission=mission, radius=radius)
+        catalog = heasarc.query_region(frbc['coord'], mission=mission,
+                                       radius=radius)
     except (ValueError, TypeError):  # No table found
         catalog = None
     else:
@@ -135,8 +138,9 @@ def summarize_catalog(frbc, catalog, summary_radius):
     seps = frbc['coord'].separation(coords)
     in_radius = seps < summary_radius
     # Start summarizing
-    summary_list += ['{:s}: There are {:d} source(s) within {:0.1f} arcsec'.format(
-        catalog.meta['survey'], np.sum(in_radius), summary_radius.to('arcsec').value)]
+    summary_list += ['{:s}: There are {:d} source(s) within {:0.1f} arcsec'
+                     .format(catalog.meta['survey'], np.sum(in_radius),
+                             summary_radius.to('arcsec').value)]
     # If any found
     if np.any(in_radius):
         # Brightest
@@ -144,16 +148,15 @@ def summarize_catalog(frbc, catalog, summary_radius):
             brightest = np.argmin(catalog[photom_column][in_radius])
         else:
             brightest = np.argmax(catalog[photom_column][in_radius])
-        summary_list += ['{:s}: The brightest source has {:s} of {:0.2f}'.format(
-            catalog.meta['survey'], photom_column,
-            catalog[photom_column][in_radius][brightest])]
+        summary_list += ['{:s}: The brightest source has {:s} of {:0.2f}'
+                         .format(catalog.meta['survey'], photom_column,
+                                 catalog[photom_column][in_radius][brightest])]
         # Closest
         closest = np.argmin(seps[in_radius])
-        summary_list += ['{:s}: The closest source is at separation {:0.2f} arcsec and has {:s} of {:0.2f}'.format(
-            catalog.meta['survey'],
-            seps[in_radius][closest].to('arcsec').value,
-            photom_column, catalog[photom_column][in_radius][brightest])]
+        summary_list += ['{:s}: The closest source is at separation {:0.2f} arcsec and has {:s} of {:0.2f}'
+                         .format(catalog.meta['survey'],
+                                 seps[in_radius][closest].to('arcsec').value,
+                                 photom_column,
+                                 catalog[photom_column][in_radius][brightest])]
     # Return
     return summary_list
-
-
