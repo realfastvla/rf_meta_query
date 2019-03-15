@@ -14,7 +14,6 @@ def parser(options=None):
     parser.add_argument("radec", type=str, help="Comma-separated RA,DEC in deg (ICRS, J2000).  e.g. 232.23141,23.2237")
     parser.add_argument("-w", "--write_meta", default=False, help="Write Meta to folder?", action='store_true')
     parser.add_argument("-v", "--verbose", default=False, help="Verbose output?", action='store_true')
-    #parser.add_argument("-llist", default='ISM', action='store_true', help="Name of LineList:  ISM, HI, H2, CO, etc.")
 
     if options is None:
         pargs = parser.parse_args()
@@ -35,10 +34,13 @@ def main(pargs):
 
     """
     import warnings
+    from astropy import units
 
     from rf_meta_query import frb_cand
-    from rf_meta_query import sdss
+    from rf_meta_query import sdss, des
     from rf_meta_query import meta_io
+    from rf_meta_query import images
+    from rf_meta_query import dm
     from rf_meta_query import radio
 
 
@@ -63,6 +65,10 @@ def main(pargs):
     # NVSS
     nvss_cat, nvss_summary = radio.query_nvss(frbc, write_meta=pargs.write_meta)
     summary_list += nvss_summary
+
+    # DES
+    des_cat, des_summary = des.query(frbc, meta_dir=meta_dir, write_meta=pargs.write_meta)
+    summary_list += des_summary
 
     # Finish by writing the FRB candidate object too
     if pargs.write_meta:

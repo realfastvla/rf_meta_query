@@ -92,7 +92,7 @@ def write_frbc(frbc, meta_dir):
         f.write(json.dumps(j_frbc, sort_keys=True, indent=4, separators=(',', ': ')))
 
 
-def write_catalog(tbl, meta_dir, ftype='fits', verbose=False):
+def write_catalog(tbl, meta_dir, ftype='ecsv', verbose=False):
     """
     Write an input astropy Table to disk
 
@@ -103,12 +103,16 @@ def write_catalog(tbl, meta_dir, ftype='fits', verbose=False):
         root: str
           Root name of the output file
         ftype: str, optional
-          File type, e.g. 'fits
+          File type, e.g. ecsv
         verbose: bool, optional
 
     Returns:
 
     """
+    # Check
+    if ftype not in ['ecsv']:
+        raise IOError("Unallowed file type: {:s}".format(ftype))
+    #
     root = tbl.meta['survey']
     # Outfile
     basename = root+'.{:s}'.format(ftype)

@@ -144,7 +144,7 @@ def get_catalog(coord,radius=1*units.arcmin, photoobj_fields=None,
     catalog = catalog_utils.sort_by_separation(catalog, coord, radec=('ra','dec'), add_sep=True)
 
     # Meta
-    catalog.meta['radius'] = radius.to('arcmin').value
+    catalog.meta['radius'] = radius
 
     # Return
     return catalog
@@ -190,10 +190,10 @@ def query(frbc, meta_dir=None, verbose=False, imsize=30., write_meta=False):
         summary_list += ['SDSS: No sources.  Likely outside its footprint']
         return sdss_cat, summary_list
 
-    # Meta
+    # Meta -- radius is set with the catalog
     sdss_cat.meta['survey'] = survey
-    sdss_cat.meta['photom_column'] = 'petroMag_r'
-    sdss_cat.meta['photom_mag'] = True
+    sdss_cat.meta['phot_clm'] = 'petroMag_r'
+    sdss_cat.meta['phot_mag'] = True
     # Write?
     if write_meta:
         meta_io.write_catalog(sdss_cat, meta_dir, verbose=verbose)

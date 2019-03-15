@@ -6,12 +6,16 @@ from astropy import units
 
 def build_frb_cand(ra, dec, id, **kwargs):
     """
+    Build a simple FRB Candidate object
+
+    Currently a dict, might become a Class
 
     Args:
         ra: float (deg)
           RA in J2000 ICRS
         dec: float (deg)
           Dec in J2000 ICRS
+        id: int
         **kwargs:
 
     Returns:

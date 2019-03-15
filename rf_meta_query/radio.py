@@ -52,9 +52,22 @@ def query_first(frbc, radius=1*units.arcmin, write_meta=False, verbose=False,
     # Return
     return first_catalog, first_summary
 
-
 def query_nvss(frbc, radius=1*units.arcmin, write_meta=False, verbose=False,
                meta_dir=None):
+    """
+    Perform an NVSS query
+
+    Args:
+        frbc:
+        radius:
+        write_meta:
+        verbose:
+        meta_dir:
+
+    Returns:
+
+    """
+
     survey = 'NVSS'
     summary_list = []
 
@@ -71,7 +84,6 @@ def query_nvss(frbc, radius=1*units.arcmin, write_meta=False, verbose=False,
 
     # Meta + Massage -- NVSS specific
     nvss_catalog.meta['survey'] = 'NVSS'
-    nvss_catalog.meta['radius'] = radius.to('arcmin').value
     nvss_catalog.rename_column("RA", "ra")
     nvss_catalog.rename_column("DEC", "dec")
     for key in ['ra', 'dec']:
@@ -79,8 +91,8 @@ def query_nvss(frbc, radius=1*units.arcmin, write_meta=False, verbose=False,
     nvss_catalog['FLUX_20_CM'].unit = units.mJy
     nvss_catalog['FLUX_20_CM_ERROR'].unit = units.mJy
 
-    nvss_catalog.meta['photom_column'] = 'FLUX_20_CM'
-    nvss_catalog.meta['photom_mag'] = False
+    nvss_catalog.meta['phot_clm'] = 'FLUX_20_CM'
+    nvss_catalog.meta['phot_mag'] = False
 
     # Summarize
     nvss_summary = catalog_utils.summarize_catalog(frbc, nvss_catalog,
