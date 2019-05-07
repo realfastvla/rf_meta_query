@@ -87,6 +87,10 @@ def summarize_catalog(frbc, catalog, summary_radius, photom_column, magnitude):
             catalog.meta['survey'],
             seps[in_radius][closest].to('arcsec').value,
             photom_column, catalog[photom_column][in_radius][brightest])]
+
+        if catalog.meta['survey'] == 'SDSS' and catalog['photo_z'][in_radius][brightest] > -9000:
+            summary_list += ['SDSS: brightest source has photo-z = {0:.4f}'.format(catalog['photo_z'][in_radius][brightest])]
+
     # Return
     return summary_list
 
