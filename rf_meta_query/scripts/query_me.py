@@ -34,19 +34,27 @@ def main(pargs):
 
     """
     import warnings
-    from astropy import units
+
+    from frb.surveys import survey_utils
 
     from rf_meta_query import frb_cand
-    from rf_meta_query import sdss, des
     from rf_meta_query import meta_io
-    from rf_meta_query import images
     from rf_meta_query import dm
-    from rf_meta_query import radio
+    from rf_meta_query import survey_defs
+    from rf_meta_query import catalog_utils
 
+    # ADD HERE
+    survey_names = ['SDSS', 'NVSS', 'FIRST', 'WENSS', 'DES', 'DECaL', 'PSRCAT']
 
     # FRB Candidate object
     ra, dec = pargs.radec.split(',')
     frbc = frb_cand.build_frb_cand(ra, dec, 11111)
+
+    # Load surveys
+    surveys = {}
+    for survey_name in survey_names:
+        radius = survey_defs.realfast_params[survey_name]['radius']
+        surveys[survey_name] = survey_utils.load_survey_by_name(survey_name, frbc['coord'], radius)
 
     summary_list = ['----------------------------------------------------------------']
     summary_list += ['FRB Candidate ID-{:d} towards {:s}'.format(frbc['id'], frb_cand.jname(frbc))]
@@ -54,21 +62,48 @@ def main(pargs):
     # Meta dir
     meta_dir = meta_io.meta_dir(frbc, create=pargs.write_meta)
 
-    # SDSS
-    sdss_cat, sdss_summary = sdss.query(frbc, meta_dir=meta_dir, write_meta=pargs.write_meta)
-    summary_list += sdss_summary
+    # Load catalog and generate simple summary
+    for survey_name in surveys.keys():
+        # Generate catalog (as possible)
+        survey = surveys[survey_name]
+        _ = survey.get_catalog()
+        # Summarize
+        summary_list += catalog_utils.summarize_catalog(
+            frbc, survey.catalog,
+            survey_defs.realfast_params[survey_name]['summary_radius'],
+            survey_defs.realfast_params[survey_name]['phot_clm'],
+            survey_defs.realfast_params[survey_name]['phot_mag'])
+        # Write catalog?
+        if pargs.write_meta and (len(survey.catalog) > 0):
+            survey.write_catalog(out_dir=meta_dir)
 
-    # FIRST
-    first_cat, first_summary = radio.query_first(frbc, write_meta=pargs.write_meta)
-    summary_list += first_summary
+    # DM? -- SDSS only for now
+    if 'SDSS' in surveys.keys():
+        survey = surveys['SDSS']
+        if len(survey.catalog) > 0:
+            # Closest within 5" ?
+            if survey.catalog['separation'][0] < (5./60):
+                # Valid value?
+                if survey.catalog['photo_z'][0] > -9000.:
+                    frbc['z'] = survey.catalog['photo_z'][0]
+                    DM = dm.best_dm_from_z(frbc)
+                    summary_list += ['DM:  Using the photo_z of the closest galaxy within 5", DM={:0.1f}'.format(DM)]
 
-    # NVSS
-    nvss_cat, nvss_summary = radio.query_nvss(frbc, write_meta=pargs.write_meta)
-    summary_list += nvss_summary
-
-    # DES
-    des_cat, des_summary = des.query(frbc, meta_dir=meta_dir, write_meta=pargs.write_meta)
-    summary_list += des_summary
+    # Cut-out
+    cutout_order = ['DES', 'SDSS', 'FIRST', 'NVSS']
+    if pargs.write_meta:
+        for corder in cutout_order:  # Loop until we generate one
+            survey = surveys[corder]
+            # Query if the catalog exists.  If empty, assume a cut-out cannot be made
+            if len(survey.catalog) == 0:
+                print("Survey {0} catalog query found no sources. Not getting cutout.".format(corder))
+                continue
+            else:
+                print("Getting cutout for survey {0}.".format(corder))
+            # Generate
+            _ = survey.get_cutout(survey_defs.realfast_params[corder]['cutout_size'])
+            # Write
+            survey.write_cutout(output_dir=meta_dir)
 
     # Finish by writing the FRB candidate object too
     if pargs.write_meta:

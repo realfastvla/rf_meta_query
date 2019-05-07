@@ -114,15 +114,19 @@ def query_hearsarc(frbc, mission, radius):
     return catalog
 
 
-def summarize_catalog(frbc, catalog, summary_radius):
+def summarize_catalog(frbc, catalog, summary_radius, photom_column, magnitude):
     """
-    Generate simple text describing the sourcese from
+    Generate simple text describing the sources from
     an input catalog within a given radius
 
     Args:
         frbc: FRB Candidate object
         catalog: astropy.table.Table
         summary_radius: Angle
+        photom_column: str
+          Column specifying which flux to work on
+        magnitude: bool
+          Is the flux a magnitude?
 
     Returns:
         summary_list: list
@@ -130,11 +134,13 @@ def summarize_catalog(frbc, catalog, summary_radius):
 
     """
     # Init
-    photom_column = catalog.meta['phot_clm']
-    magnitude = catalog.meta['phot_mag']
     summary_list = []
-    coords = SkyCoord(ra=catalog['ra'], dec=catalog['dec'], unit='deg')
+    # Empty catalog?
+    if len(catalog) == 0:
+        summary_list += ['{:s}: There were no cataloged sources from this survey.'.format(catalog.meta['survey'])]
+        return summary_list
     # Find all within the summary radius
+    coords = SkyCoord(ra=catalog['ra'], dec=catalog['dec'], unit='deg')
     seps = frbc['coord'].separation(coords)
     in_radius = seps < summary_radius
     # Start summarizing
@@ -153,10 +159,13 @@ def summarize_catalog(frbc, catalog, summary_radius):
                                  catalog[photom_column][in_radius][brightest])]
         # Closest
         closest = np.argmin(seps[in_radius])
-        summary_list += ['{:s}: The closest source is at separation {:0.2f} arcsec and has {:s} of {:0.2f}'
-                         .format(catalog.meta['survey'],
-                                 seps[in_radius][closest].to('arcsec').value,
-                                 photom_column,
-                                 catalog[photom_column][in_radius][brightest])]
+        summary_list += ['{:s}: The closest source is at separation {:0.2f} arcsec and has {:s} of {:0.2f}'.format(
+            catalog.meta['survey'],
+            seps[in_radius][closest].to('arcsec').value,
+            photom_column, catalog[photom_column][in_radius][brightest])]
+
+        if catalog.meta['survey'] == 'SDSS' and catalog['photo_z'][in_radius][brightest] > -9000:
+            summary_list += ['SDSS: brightest source has photo-z = {0:.4f}'.format(catalog['photo_z'][in_radius][brightest])]
+
     # Return
     return summary_list
