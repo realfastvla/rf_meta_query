@@ -125,7 +125,7 @@ def get_catalog(coord,radius=1*units.arcmin, query_fields=None,
         print(query)
     
     result = qc.query(token,sql=query)
-    cat = helpers.convert(result)
+    cat = helpers.utils.convert(result)
     # TODO:: Suppress the print output from convert
     # TODO:: Dig into why the heck it doesn't want to natively
     #        output to a table when it was clearly intended to with 'outfmt=table'
